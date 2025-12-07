@@ -21,6 +21,7 @@ const UnreadCtx = createContext({
   refreshBookingUnread: async () => {},
   markBookingNotificationsRead: async () => {},
 });
+
 export const useUnread = () => useContext(UnreadCtx);
 
 // Optional neutral avatar for notifications (replace with your logo if you want)
@@ -47,7 +48,7 @@ async function rpcWithParams(name, attempts) {
   return { data: null, error: { message: "all attempts failed" }, status: 400 };
 }
 
-export default function UnreadProvider({ children }) {
+export function UnreadProvider({ children }) {
   const [user, setUser] = useState(null);
 
   // Messages unread (existing)
@@ -129,7 +130,8 @@ export default function UnreadProvider({ children }) {
         if (!error && Array.isArray(rows)) {
           total = rows.length;
           map = rows.reduce((acc, r) => {
-            if (r?.booking_id) acc[r.booking_id] = (acc[r.booking_id] || 0) + 1;
+            if (r?.booking_id)
+              acc[r.booking_id] = (acc[r.booking_id] || 0) + 1;
             return acc;
           }, {});
         }
@@ -150,7 +152,10 @@ export default function UnreadProvider({ children }) {
               if (r?.booking_id) acc[r.booking_id] = Number(r.unread || 0);
               return acc;
             }, {});
-            total = Object.values(map).reduce((a, b) => a + Number(b || 0), 0);
+            total = Object.values(map).reduce(
+              (a, b) => a + Number(b || 0),
+              0
+            );
           } else if (status === 404) {
             hasBookingRpc.current.byBooking = false;
           }
@@ -462,7 +467,12 @@ export default function UnreadProvider({ children }) {
       if (bookMineChannelRef.current)
         supabase.removeChannel(bookMineChannelRef.current);
     };
-  }, [recalcUnread, recalcBookingUnread, attachMessageRealtime, attachBookingRealtime]);
+  }, [
+    recalcUnread,
+    recalcBookingUnread,
+    attachMessageRealtime,
+    attachBookingRealtime,
+  ]);
 
   /* -------------------- public APIs -------------------- */
 
@@ -488,51 +498,55 @@ export default function UnreadProvider({ children }) {
     [scheduleRecalcSoon]
   );
 
-// inside UnreadProvider
-const markBookingNotificationsRead = useCallback(
-  async (myId, bookingId) => {
-    if (!myId) return;
+  const markBookingNotificationsRead = useCallback(
+    async (myId, bookingId) => {
+      if (!myId) return;
 
-    // Mark rows in the table (if present)
-    try {
-      const q = supabase
-        .from("booking_notifications")
-        .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq("recipient_id", myId)
-        .eq("is_read", false);
-      if (bookingId) q.eq("booking_id", bookingId);
-      await q;
-    } catch {}
+      // Mark rows in the table (if present)
+      try {
+        const q = supabase
+          .from("booking_notifications")
+          .update({ is_read: true, read_at: new Date().toISOString() })
+          .eq("recipient_id", myId)
+          .eq("is_read", false);
+        if (bookingId) q.eq("booking_id", bookingId);
+        await q;
+      } catch {}
 
-    // Also call the RPC you just created
-    try {
-      await supabase.rpc("booking_mark_read", {
-        p_recipient: myId,
-        p_booking: bookingId ?? null,
+      // Also call the RPC
+      try {
+        await supabase.rpc("booking_mark_read", {
+          p_recipient: myId,
+          p_booking: bookingId ?? null,
+        });
+      } catch {}
+
+      // Optimistic local update + recount
+      setBookingsUnreadByBooking((prev) => {
+        if (!bookingId) {
+          setBookingUnread(0);
+          bcRef.current?.postMessage({ type: "bookingUnread", value: 0 });
+          bcRef.current?.postMessage({
+            type: "bookingUnreadMap",
+            value: {},
+          });
+          return {};
+        }
+        const next = { ...prev, [bookingId]: 0 };
+        const nextTotal = Object.values(next).reduce(
+          (a, b) => a + Number(b || 0),
+          0
+        );
+        setBookingUnread(nextTotal);
+        bcRef.current?.postMessage({ type: "bookingUnread", value: nextTotal });
+        bcRef.current?.postMessage({ type: "bookingUnreadMap", value: next });
+        return next;
       });
-    } catch {}
 
-    // Optimistic local update + recount
-    setBookingsUnreadByBooking((prev) => {
-      if (!bookingId) {
-        setBookingUnread(0);
-        bcRef.current?.postMessage({ type: "bookingUnread", value: 0 });
-        bcRef.current?.postMessage({ type: "bookingUnreadMap", value: {} });
-        return {};
-      }
-      const next = { ...prev, [bookingId]: 0 };
-      const nextTotal = Object.values(next).reduce((a, b) => a + Number(b || 0), 0);
-      setBookingUnread(nextTotal);
-      bcRef.current?.postMessage({ type: "bookingUnread", value: nextTotal });
-      bcRef.current?.postMessage({ type: "bookingUnreadMap", value: next });
-      return next;
-    });
-
-    scheduleBookingRecalcSoon(myId);
-  },
-  [scheduleBookingRecalcSoon]
-);
-
+      scheduleBookingRecalcSoon(myId);
+    },
+    [scheduleBookingRecalcSoon]
+  );
 
   // Public refresher (useful after bulk operations)
   const refreshBookingUnread = useCallback(async () => {
@@ -564,3 +578,6 @@ const markBookingNotificationsRead = useCallback(
 
   return <UnreadCtx.Provider value={value}>{children}</UnreadCtx.Provider>;
 }
+
+// Also keep default export (so you can import UnreadProvider either way)
+export default UnreadProvider;
