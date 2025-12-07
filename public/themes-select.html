@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Select Theme • Inva</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Supabase JS v2 -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg: #f5f7fb;
+      --bg-soft: #ffffff;
+      --card: #ffffff;
+      --card-soft: #f0f3f9;
+
+      --accent: #635bff;
+      --accent-soft: rgba(99, 91, 255, 0.12);
+
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border-subtle: rgba(15, 23, 42, 0.08);
+
+      --shadow-soft: 0 10px 30px rgba(15,23,42,0.08);
+      --shadow-strong: 0 18px 50px rgba(15,23,42,0.12);
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family: "Inter", system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 10% -10%, #e9e7ff 0%, transparent 60%),
+        radial-gradient(1000px 600px at 110% 0%, #ffe4f3 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      min-height:100vh;
+    }
+
+    .page{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 14px 40px;
+    }
+
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .header-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .back-btn{
+      width:36px; height:36px;
+      border-radius:999px;
+      border:1px solid var(--border-subtle);
+      background:#fff;
+      display:grid; place-items:center;
+      cursor:pointer;
+      box-shadow: var(--shadow-soft);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+
+    .back-btn:hover{
+      transform: translateY(-1px);
+      background:#f6f7ff;
+      box-shadow: 0 16px 30px rgba(15,23,42,0.18);
+    }
+    .back-btn svg{
+      width:18px; height:18px;
+    }
+    .header-title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .header-title h1{
+      font-size:17px;
+      font-weight:800;
+      letter-spacing:-0.02em;
+    }
+    .header-title span{
+      font-size:12px;
+      color:var(--text-muted);
+    }
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .add-theme-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid rgba(99,91,255,0.4);
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color:#fff;
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow:0 10px 30px rgba(79,70,229,0.35);
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    }
+    .add-theme-btn:hover{
+      transform: translateY(-1px);
+      box-shadow:0 16px 40px rgba(79,70,229,0.45);
+      filter:brightness(1.03);
+    }
+    .add-theme-btn span.add-icon{
+      font-size:14px;
+      line-height:1;
+    }
+
+    .theme-searchbar{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      background:#fff;
+      border:1px solid var(--border-subtle);
+      border-radius:12px;
+      box-shadow: var(--shadow-soft);
+      margin: 4px 0 14px;
+    }
+    .theme-search-icon{
+      width:16px; height:16px;
+      color: var(--text-muted);
+      flex-shrink:0;
+    }
+    .theme-search-input{
+      flex:1;
+      border:none; outline:none;
+      font-size:13px;
+      background:transparent;
+      color: var(--text);
+    }
+    .theme-search-input::placeholder{ color:#94a3b8; }
+    .theme-search-clear{
+      width:26px; height:26px;
+      border-radius:999px; border:none;
+      background: var(--card-soft);
+      color:#0f172a;
+      font-size:18px; line-height:1;
+      cursor:pointer;
+      display:grid; place-items:center;
+      opacity:.6;
+      transition: opacity .12s ease, transform .12s ease;
+    }
+    .theme-search-clear:hover{ opacity:1; transform: translateY(-1px); }
+
+    .themes-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:12px;
+    }
+    @media (max-width:640px){
+      .themes-grid{
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap:10px;
+      }
+    }
+    @media (max-width:420px){
+      .themes-grid{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .theme-option{
+      width:100%;
+      height:260px;
+      border-radius:16px;
+      cursor:pointer;
+      position:relative;
+      overflow:visible;
+      padding:6px;
+      padding-bottom:40px;
+      background: var(--card-soft);
+      display:flex;
+      flex-direction:column;
+      user-select:none;
+      touch-action:manipulation;
+      box-shadow: var(--shadow-soft);
+      border:0 solid var(--border-subtle);
+      transition: box-shadow .12s ease, transform .12s ease;
+    }
+    .theme-option:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(15,23,42,0.18);
+    }
+    .theme-option.is-selected{
+      box-shadow: 0 0 0 2px var(--accent), 0 10px 24px rgba(15,23,42,0.3);
+    }
+
+    .theme-preview-btn{
+      position:absolute;
+      top:8px;
+      right:8px;
+      z-index:5;
+      width:30px;
+      height:30px;
+      border-radius:9px;
+      border:1px solid rgba(15,23,42,0.10);
+      background:rgba(255,255,255,0.95);
+      display:grid; place-items:center;
+      cursor:pointer;
+      backdrop-filter:blur(6px);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .theme-preview-btn:hover{
+      transform: translateY(-1px);
+      background:#f6f7ff;
+    }
+    .theme-preview-btn svg{
+      width:16px; height:16px;
+      color:#0f172a;
+      opacity:.9;
+    }
+
+    .theme-preview-inner{
+      position:relative;
+      flex:1;
+      border-radius:12px;
+      overflow:hidden;
+      background:#0b0f14;
+    }
+    .theme-preview-inner .theme-iframe{
+      position:absolute;
+      inset:0;
+      width:400%;
+      height:400%;
+      transform: scale(0.25) translateZ(0);
+      transform-origin: top left;
+      border:0;
+      pointer-events:none;
+      background:#0b0f14;
+      display:block;
+    }
+
+    .theme-name-overlay{
+      position:absolute;
+      left:10px;
+      right:10px;
+      bottom:6px;
+      text-align:center;
+      z-index:4;
+    }
+    .theme-name{
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .theme-sub{
+      font-size:11px;
+      color:var(--text-muted);
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .theme-empty{
+      font-size:13px;
+      color:var(--text-muted);
+      text-align:center;
+      margin-top:18px;
+    }
+
+    .pill-current{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(99,91,255,0.1);
+      color:#4338ca;
+      border:1px solid rgba(99,91,255,0.35);
+    }
+
+    /* === Add Theme Modal === */
+    .theme-modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:40;
+      padding:16px;
+    }
+    .theme-modal-backdrop.is-open{
+      display:flex;
+    }
+    .theme-modal{
+      width:100%;
+      max-width:420px;
+      border-radius:18px;
+      background:#ffffff;
+      box-shadow:0 24px 60px rgba(15,23,42,0.25);
+      border:1px solid rgba(226,232,240,0.9);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .theme-modal-header{
+      padding:14px 16px 10px;
+      border-bottom:1px solid rgba(226,232,240,0.9);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .theme-modal-title{
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:-0.01em;
+    }
+    .theme-modal-close{
+      width:28px; height:28px;
+      border-radius:999px;
+      border:none;
+      background:#f1f5f9;
+      display:grid; place-items:center;
+      cursor:pointer;
+      font-size:16px;
+      line-height:1;
+      color:#0f172a;
+    }
+    .theme-modal-body{
+      padding:14px 16px 10px;
+      max-height:60vh;
+      overflow:auto;
+    }
+    .theme-field{
+      margin-bottom:10px;
+    }
+    .theme-field label{
+      display:block;
+      font-size:11px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:4px;
+      color:#64748b;
+    }
+    .theme-field input,
+    .theme-field textarea,
+    .theme-field select{
+      width:100%;
+      border-radius:9px;
+      border:1px solid rgba(148,163,184,0.7);
+      padding:7px 9px;
+      font-size:13px;
+      outline:none;
+      background:#f8fafc;
+      transition:border-color .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+    .theme-field input:focus,
+    .theme-field textarea:focus,
+    .theme-field select:focus{
+      border-color:#6366f1;
+      background:#ffffff;
+      box-shadow:0 0 0 1px rgba(99,102,241,0.15);
+    }
+    .theme-field small{
+      display:block;
+      margin-top:3px;
+      font-size:11px;
+      color:#94a3b8;
+    }
+    .theme-modal-footer{
+      padding:10px 16px 12px;
+      border-top:1px solid rgba(226,232,240,0.9);
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+    }
+    .btn-secondary{
+      padding:7px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.8);
+      background:#f8fafc;
+      font-size:12px;
+      cursor:pointer;
+      color:#0f172a;
+    }
+    .btn-primary{
+      padding:7px 14px;
+      border-radius:999px;
+      border:none;
+      background:linear-gradient(135deg,#6366f1,#a855f7);
+      color:#fff;
+      font-size:12px;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 10px 30px rgba(79,70,229,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="header-left">
+        <button id="btn-back" class="back-btn" type="button" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <div class="header-title">
+          <h1>Select a Theme</h1>
+          <span>Tap a card to apply it to your invite.</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span id="current-theme-pill" class="pill-current" style="display:none;"></span>
+      </div>
+    </header>
+
+    <div class="theme-searchbar">
+      <svg class="theme-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input id="theme-search-input" class="theme-search-input" type="text"
+        placeholder="Search themes (e.g. vintage, pastel, boho)..." autocomplete="off"/>
+      <button id="theme-search-clear" class="theme-search-clear" type="button" aria-label="Clear search">
+        &times;
+      </button>
+    </div>
+
+    <section>
+      <div id="themes-grid" class="themes-grid"></div>
+      <div id="themes-empty" class="theme-empty" style="display:none;">
+        No themes match your search.
+      </div>
+    </section>
+  </div>
+
+  <!-- Add Theme Modal -->
+  <div id="theme-upload-modal" class="theme-modal-backdrop" aria-hidden="true">
+    <div class="theme-modal" role="dialog" aria-modal="true" aria-labelledby="theme-modal-title">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title" id="theme-modal-title">Add New Theme</div>
+        <button class="theme-modal-close" id="theme-modal-close" type="button" aria-label="Close">
+          &times;
+        </button>
+      </div>
+      <div class="theme-modal-body">
+        <div class="theme-field">
+          <label for="theme-key-input">Theme key</label>
+          <input id="theme-key-input" type="text" placeholder="e.g. midnight-bloom" />
+          <small>Lowercase, no spaces. This will be used as the theme id.</small>
+        </div>
+        <div class="theme-field">
+          <label for="theme-name-input">Theme name</label>
+          <input id="theme-name-input" type="text" placeholder="e.g. Midnight Bloom" />
+        </div>
+        <div class="theme-field">
+          <label for="theme-subtitle-input">Subtitle</label>
+          <input id="theme-subtitle-input" type="text" placeholder="e.g. Deep navy & gold highlights" />
+        </div>
+        <div class="theme-field">
+          <label for="theme-file-input">Upload HTML file</label>
+          <input id="theme-file-input" type="file" accept=".html,text/html" />
+          <small>The file will be uploaded to your Supabase HTML themes bucket.</small>
+        </div>
+        <div class="theme-field">
+          <label for="theme-meta-input">Meta / notes (optional)</label>
+          <textarea id="theme-meta-input" rows="2" placeholder="Short note about the vibe, usage, etc."></textarea>
+        </div>
+      </div>
+      <div class="theme-modal-footer">
+        <button class="btn-secondary" type="button" id="theme-cancel-btn">Cancel</button>
+        <button class="btn-primary" type="button" id="theme-save-btn">Save Theme</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ same localStorage keys as builder
+    const LOCAL_KEY_DATA  = "inviteBuilderData_v4";
+    const LOCAL_KEY_THEME = "inviteBuilderTheme_v4";
+    const LOCAL_KEY_ID    = "inviteBuilderId_v4";
+
+    // ✅ Supabase config (same as builder)
+    const SUPABASE_URL = "https://minftvflekxdoiubeujy.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pbmZ0dmZsZWt4ZG9pdWJldWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MTc4NjgsImV4cCI6MjA2NjA5Mzg2OH0.Aj0-ts6WzffJRrXDkTMDKjQT4t6pW_-jSUft4md0KJM";
+
+    // 🔐 Storage bucket for HTML themes
+    const THEME_BUCKET = "html-themes"; // make sure this bucket exists
+    const THEME_BUCKET_PUBLIC_BASE = `${SUPABASE_URL}/storage/v1/object/public/${THEME_BUCKET}`;
+
+    let supabaseClient = null;
+
+    // 🧱 Static base themes (local files on your server)
+    const STATIC_THEMES = [
+      { key:"classic-warm",    name:"Classic Warm",    sub:"Soft gold & terracotta", meta:"Default theme", file:"theme1.html", source:"local" },
+      { key:"elegant-white",   name:"Elegant White",   sub:"Clean, airy, minimal",   meta:"Bright white",  file:"theme2.html", source:"local" },
+      { key:"dark-gold",       name:"Dark & Gold",     sub:"Warm, earthy tones",     meta:"Rustic feel",   file:"theme3.html", source:"local" },
+      { key:"pastel-green",    name:"Pastel Green",    sub:"Soft, fresh palette",    meta:"Light & airy",  file:"theme4.html", source:"local" },
+      { key:"elegant-maroon",  name:"Elegant Maroon",  sub:"Old-soul look",          meta:"Classic vibe",  file:"theme5.html", source:"local" },
+      { key:"emerald-vintage", name:"Emerald Vintage", sub:"Emerald & gold",         meta:"Rich feel",     file:"theme6.html", source:"local" },
+      { key:"elegant-blue",    name:"Elegant Blue",    sub:"Moody & cinematic",      meta:"Gold text",     file:"theme7.html", source:"local" },
+    ];
+
+    // 🧱 Dynamic themes from Supabase (HTML uploaded to Storage)
+    let dynamicThemes = [];
+
+    let data = null;
+    let currentTheme = "classic-warm";
+    let currentInviteId = null;
+    let themeSearchTerm = "";
+
+    function getDefaultInviteData() {
+      return {
+        theme: "classic-warm",
+        bride: "",
+        groom: "",
+        tagline: "",
+        date: "",
+        time: "",
+        timezone: "",
+        main_venue_label: "St. John Cathedral • City",
+        ceremony: { name:"", address:"", map_url:"", notes:"", photo_url:"" },
+        reception: { name:"", address:"", map_url:"", notes:"", photo_url:"" },
+        dress_code: { title:"", description:"", colors:["#FDF5E6","#9DC183","#D79A9A"] },
+        sponsors: {},
+        story: {},
+        verse: {},
+        media: { photos: [], video_url:"" },
+        rsvp_settings: {},
+        theme_photos: {}
+      };
+    }
+
+    function loadLocal() {
+      try{
+        const rawData  = localStorage.getItem(LOCAL_KEY_DATA);
+        const rawTheme = localStorage.getItem(LOCAL_KEY_THEME);
+        const rawId    = localStorage.getItem(LOCAL_KEY_ID);
+
+        const params = new URLSearchParams(window.location.search);
+        const idFromUrl = params.get("id");
+
+        data = rawData ? JSON.parse(rawData) : getDefaultInviteData();
+        currentTheme   = rawTheme || data.theme || "classic-warm";
+        currentInviteId = idFromUrl || rawId || null;
+      }catch(e){
+        data = getDefaultInviteData();
+        currentTheme = data.theme || "classic-warm";
+        currentInviteId = null;
+      }
+    }
+
+    function saveLocal() {
+      if (!data) data = getDefaultInviteData();
+      data.theme = currentTheme;
+      localStorage.setItem(LOCAL_KEY_DATA, JSON.stringify(data));
+      localStorage.setItem(LOCAL_KEY_THEME, currentTheme);
+      if (currentInviteId) localStorage.setItem(LOCAL_KEY_ID, currentInviteId);
+    }
+
+    function getAllThemes(){
+      return [...STATIC_THEMES, ...dynamicThemes];
+    }
+
+    function getFilteredThemes(){
+      const all = getAllThemes();
+      const term = themeSearchTerm.trim().toLowerCase();
+      if (!term) return all;
+
+      return all.filter(t => {
+        const hay = [
+          t.key,
+          t.name,
+          t.sub,
+          t.meta,
+          t.file
+        ].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(term);
+      });
+    }
+
+    function findThemeByKey(key){
+      return getAllThemes().find(t => t.key === key);
+    }
+
+    function buildThemePreviewUrl(themeKey){
+      const all = getAllThemes();
+      const theme = findThemeByKey(themeKey) || all[0];
+      if (!theme) return "#";
+
+      const id = currentInviteId || "preview";
+      const query = `?id=${encodeURIComponent(id)}&preview=1`;
+
+      if (theme.source === "storage") {
+        // file is the storage path, e.g. "themes/midnight-bloom/1699999999999-midnight-bloom.html"
+        const path = theme.file || "";
+        return `${THEME_BUCKET_PUBLIC_BASE}/${path}${query}`;
+      }
+
+      // local file mode (existing themes)
+      const fileName = theme.file || "theme1.html";
+      const currentPath = window.location.pathname;
+      const guestPath = currentPath.replace(/[^/]+$/, fileName);
+      return `${window.location.origin}${guestPath}${query}`;
+    }
+
+    async function updateThemeInSupabase(themeKey){
+      if (!supabaseClient || !currentInviteId) return;
+      try{
+        await supabaseClient
+          .from("invites-new")
+          .update({ theme: themeKey })
+          .eq("id", currentInviteId);
+      }catch(err){
+        console.warn("Failed to update theme in Supabase:", err);
+      }
+    }
+
+    async function selectTheme(themeKey){
+      currentTheme = themeKey;
+      saveLocal();
+      await updateThemeInSupabase(themeKey);
+      renderThemesGrid();
+    }
+
+    function renderThemesGrid(){
+      const grid = document.getElementById("themes-grid");
+      const emptyEl = document.getElementById("themes-empty");
+      const pill = document.getElementById("current-theme-pill");
+      if (!grid) return;
+
+      const list = getFilteredThemes();
+      grid.innerHTML = "";
+
+      if (!list.length) {
+        emptyEl.style.display = "block";
+        if (pill) pill.style.display = "none";
+        return;
+      }
+      emptyEl.style.display = "none";
+
+      const curr = findThemeByKey(currentTheme);
+      if (pill && curr) {
+        pill.textContent = `Current: ${curr.name}`;
+        pill.style.display = "inline-flex";
+      } else if (pill) {
+        pill.style.display = "none";
+      }
+
+      list.forEach(t => {
+        const card = document.createElement("div");
+        card.className = "theme-option";
+        card.setAttribute("data-theme", t.key);
+        card.tabIndex = 0;
+
+        const src = buildThemePreviewUrl(t.key);
+
+        card.innerHTML = `
+          <button class="theme-preview-btn" type="button" data-theme="${t.key}" aria-label="Preview ${t.name}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+
+<div class="theme-preview-inner">
+  <iframe
+    class="theme-iframe"
+    src="${src}"
+    loading="lazy"
+    sandbox="allow-same-origin allow-scripts"
+  ></iframe>
+</div>
+
+
+          <div class="theme-name-overlay">
+            <div class="theme-name">${t.name}</div>
+            <div class="theme-sub">${t.sub || ""}</div>
+          </div>
+        `;
+
+        const pick = () => selectTheme(t.key);
+        card.addEventListener("click", pick);
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            pick();
+          }
+        });
+
+        grid.appendChild(card);
+      });
+
+      // preview buttons open full-page preview
+      grid.querySelectorAll(".theme-preview-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const key = btn.getAttribute("data-theme");
+          window.open(buildThemePreviewUrl(key), "_blank");
+        });
+      });
+
+      // highlight selected card
+      grid.querySelectorAll(".theme-option").forEach(el => {
+        const key = el.getAttribute("data-theme");
+        el.classList.toggle("is-selected", key === currentTheme);
+      });
+    }
+
+    async function loadThemesFromSupabase(){
+      if (!supabaseClient) return;
+      try{
+        const { data: rows, error } = await supabaseClient
+          .from("invite_themes")
+          .select("theme_key,name,subtitle,meta,html_path,scope,is_active,created_at")
+          .eq("is_active", true)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.warn("Failed to load invite_themes:", error);
+          return;
+        }
+
+        dynamicThemes = (rows || []).map(row => ({
+          key: row.theme_key,
+          name: row.name,
+          sub: row.subtitle || "",
+          meta: row.meta || "",
+          file: row.html_path || "",   // storage path
+          scope: row.scope || "system",
+          source: "storage"
+        }));
+
+        renderThemesGrid();
+      } catch(err){
+        console.warn("Failed to load invite_themes:", err);
+      }
+    }
+
+    // === Modal helpers ===
+    function openThemeModal(){
+      const backdrop = document.getElementById("theme-upload-modal");
+      if (!backdrop) return;
+      backdrop.classList.add("is-open");
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+
+    function closeThemeModal(){
+      const backdrop = document.getElementById("theme-upload-modal");
+      if (!backdrop) return;
+      backdrop.classList.remove("is-open");
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    async function handleSaveTheme(){
+      if (!supabaseClient) {
+        alert("Supabase client is not ready.");
+        return;
+      }
+
+      const keyEl   = document.getElementById("theme-key-input");
+      const nameEl  = document.getElementById("theme-name-input");
+      const subEl   = document.getElementById("theme-subtitle-input");
+      const fileEl  = document.getElementById("theme-file-input");
+      const metaEl  = document.getElementById("theme-meta-input");
+
+      let themeKey  = (keyEl?.value || "").trim();
+      const name    = (nameEl?.value || "").trim();
+      const subtitle= (subEl?.value || "").trim();
+      const meta    = (metaEl?.value || "").trim();
+      const file    = fileEl?.files?.[0] || null;
+
+      if (!themeKey || !name || !file) {
+        alert("Theme key, name, and HTML file are required.");
+        return;
+      }
+
+      themeKey = themeKey.toLowerCase().replace(/\s+/g, "-");
+
+      // derive a safe filename
+      let baseName = file.name.toLowerCase();
+      if (!baseName.endsWith(".html")) {
+        baseName = `${baseName}.html`;
+      }
+
+      // path in storage bucket
+      const storagePath = `themes/${themeKey}/${Date.now()}-${baseName}`;
+
+      try{
+        // 1) Upload HTML file to bucket
+        const { data: uploadData, error: uploadError } = await supabaseClient
+          .storage
+          .from(THEME_BUCKET)
+          .upload(storagePath, file, {
+            contentType: "text/html",
+            cacheControl: "3600",
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          alert("Failed to upload HTML file. Check console for details.");
+          return;
+        }
+
+        // 2) Insert record in invite_themes (use html_path NOT NULL)
+        const payload = {
+          theme_key: themeKey,
+          name,
+          subtitle,
+          meta,
+          html_path: storagePath,  // ✅ satisfies NOT NULL column
+          scope: "system",
+          is_active: true
+        };
+
+        const { data: inserted, error } = await supabaseClient
+          .from("invite_themes")
+          .insert(payload)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Insert theme error:", error);
+          alert("Failed to save theme record in database.");
+          return;
+        }
+
+        // 3) Add to dynamicThemes and refresh UI
+        dynamicThemes.push({
+          key: inserted.theme_key,
+          name: inserted.name,
+          sub: inserted.subtitle || "",
+          meta: inserted.meta || "",
+          file: inserted.html_path || storagePath, // storage path
+          scope: inserted.scope || "system",
+          source: "storage"
+        });
+
+        // clear inputs
+        if (keyEl) keyEl.value = "";
+        if (nameEl) nameEl.value = "";
+        if (subEl) subEl.value = "";
+        if (fileEl) fileEl.value = "";
+        if (metaEl) metaEl.value = "";
+
+        closeThemeModal();
+        renderThemesGrid();
+        alert("Theme uploaded and added successfully!");
+      }catch(err){
+        console.error("Unexpected insert/upload error:", err);
+        alert("Unexpected error while saving theme.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      loadLocal();
+      renderThemesGrid();
+      loadThemesFromSupabase();
+
+      const searchInput = document.getElementById("theme-search-input");
+      const clearBtn = document.getElementById("theme-search-clear");
+
+      if (searchInput) {
+        searchInput.value = themeSearchTerm;
+        searchInput.addEventListener("input", () => {
+          themeSearchTerm = searchInput.value;
+          renderThemesGrid();
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          themeSearchTerm = "";
+          if (searchInput) searchInput.value = "";
+          renderThemesGrid();
+        });
+      }
+
+document.getElementById("btn-back")?.addEventListener("click", () => {
+  const url = new URL(window.location.href);
+  // if your file is named differently, adjust here (e.g. "weddinginvitemaker.html")
+  url.pathname = url.pathname.replace(/themes-select\.html$/, "weddinginvimaker.html");
+
+  // use replace so we don't keep the theme-select in history
+  window.location.replace(url.toString());
+});
+
+
+      // 🔐 Show Add Theme modal only if password correct (frontend gate)
+      const addBtn = document.getElementById("btn-add-theme");
+      if (addBtn) {
+        addBtn.addEventListener("click", () => {
+          const pwd = prompt("Enter admin password to add a new theme:");
+          if (pwd === null) return; // cancelled
+          if (pwd !== "Clara2023") {
+            alert("Incorrect password.");
+            return;
+          }
+          openThemeModal();
+        });
+      }
+
+      // Modal close handlers
+      document.getElementById("theme-modal-close")?.addEventListener("click", closeThemeModal);
+      document.getElementById("theme-cancel-btn")?.addEventListener("click", closeThemeModal);
+      document.getElementById("theme-save-btn")?.addEventListener("click", handleSaveTheme);
+
+      // Close on backdrop click
+      const backdrop = document.getElementById("theme-upload-modal");
+      if (backdrop) {
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) {
+            closeThemeModal();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

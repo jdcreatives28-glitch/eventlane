@@ -1,0 +1,206 @@
+/* =========================================
+   HOME PAGE DROP-IN THEME (scope: .home-page)
+   Brand: #069C6F
+   ========================================= */
+:root{
+  --accent: #069C6F;
+  --accent-2: #34D399;
+  --bg: #F8F9FA;
+  --surface: #FFFFFF;
+  --text: #32373b;
+  --muted: #495057;
+  --border: #E9ECEF;
+  --shadow-1: 0 4px 12px rgba(0,0,0,.06);
+  --shadow-2: 0 10px 24px rgba(6,156,111,.16);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+}
+
+/* Page baseline */
+.home-page{
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- App Header polish (keeps your gradient) --- */
+.home-page .app-header,
+.home-page [style*="linear-gradient"][style*="#069C6F"]{
+  position: relative;
+  isolation: isolate;
+  box-shadow: var(--shadow-1);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+.home-page .app-header::after{
+  /* subtle wave overlay */
+  content:"";
+  position:absolute; inset:0;
+  background:
+    radial-gradient(1200px 220px at -10% 0%, rgba(255,255,255,.12), transparent 60%),
+    radial-gradient(1200px 220px at 110% 0%, rgba(255,255,255,.10), transparent 60%);
+  pointer-events:none;
+  mix-blend-mode: screen;
+}
+
+/* --- Floating Search Bar --- */
+.home-page .search-bar,
+.home-page button[aria-label="Search venues or locations"]{
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.04);
+}
+.home-page .search-bar:hover,
+.home-page button[aria-label="Search venues or locations"]:hover{
+  box-shadow: 0 10px 28px rgba(0,0,0,.10);
+}
+.home-page .search-bar:focus-visible,
+.home-page button[aria-label="Search venues or locations"]:focus-visible{
+  outline: 3px solid rgba(6,156,111,.35);
+  outline-offset: 2px;
+}
+
+/* --- Section headings + See All --- */
+.home-page section h3{
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.home-page button[type="button"]:where(:has(svg)) /* catch "See all" */{
+  border-radius: var(--radius-pill);
+}
+.home-page button[type="button"].see-all,
+.home-page button[type="button"][style*="See all"]{
+  color: var(--accent);
+}
+
+/* --- Shortcuts (horizontal) --- */
+.home-page .shortcuts-row{
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+  /* edge fade */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+.home-page .shortcut{
+  scroll-snap-align: start;
+  box-shadow: var(--shadow-1);
+  border: 1px solid var(--border);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.home-page .shortcut:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+  border-color: rgba(6,156,111,.25);
+}
+.home-page .shortcut svg{
+  color: var(--accent);
+  background: rgba(6,156,111,.10);
+  border-radius: 10px;
+  padding: 8px;
+}
+
+/* --- Chips (Categories) --- */
+.home-page .chips-row{
+  gap: 10px;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.home-page .chip{
+  border: 1px solid var(--border) !important;
+  background: #fff !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .12s ease;
+}
+.home-page .chip:hover{
+  border-color: rgba(6,156,111,.34) !important;
+  box-shadow: 0 6px 18px rgba(6,156,111,.10);
+  transform: translateY(-1px);
+}
+.home-page .chip:active{ transform: translateY(0); }
+
+/* --- Suggested (carousel cards) --- */
+.home-page .h-scroll{
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 14px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+.home-page .card{
+  scroll-snap-align: start;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-1);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.home-page .card:hover{
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-2);
+  border-color: rgba(6,156,111,.25);
+}
+.home-page .card-img-wrap{ overflow: hidden; border-bottom: 1px solid var(--border); }
+.home-page .card-img{ transition: transform .6s cubic-bezier(.2,.6,.2,1); }
+.home-page .card:hover .card-img{ transform: scale(1.05); }
+
+/* Price badge on card (if you add class "price-badge" to that div, it’ll style nicely) */
+.home-page .price-badge{
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 6px 16px rgba(6,156,111,.3);
+}
+
+/* --- Popular Near You (rows) --- */
+.home-page .row-card{
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-1);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.home-page .row-card:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+  border-color: rgba(6,156,111,.25);
+}
+.home-page .row-img{ box-shadow: 0 1px 8px rgba(0,0,0,.08); }
+.home-page .row-price{
+  background: rgba(6,156,111,.12) !important;
+  color: var(--accent) !important;
+  border: 1px solid rgba(6,156,111,.25);
+}
+
+/* --- Empty states --- */
+.home-page .emptyText{
+  color: var(--muted);
+}
+
+/* --- Buttons (generic polish) --- */
+.home-page .nearbyBtn{
+  background: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(6,156,111,.24) !important;
+}
+.home-page .nearbyBtn:hover{
+  filter: brightness(1.04);
+}
+
+/* --- Skeleton shimmer (uses your existing keyframes) --- */
+.home-page .shimmer{
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.8) 50%, rgba(255,255,255,0) 100%) !important;
+  animation: shimmer 1.1s linear infinite !important;
+}
+
+/* --- Micro-interactions --- */
+.home-page .card:active,
+.home-page .row-card:active,
+.home-page .shortcut:active{
+  transform: translateY(0);
+}
+
+/* --- Compact spacing on large screens --- */
+@media (min-width: 1024px){
+  .home-page section{
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+}

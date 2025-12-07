@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Online Wedding Invitation Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Supabase JS v2 -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      /* ✅ bright Canva-like base */
+      --bg: #f5f7fb;
+      --bg-soft: #ffffff;
+      --card: #ffffff;
+      --card-soft: #f0f3f9;
+
+      --accent: #635bff;          /* canva-ish purple */
+      --accent-2: #ff6ad5;        /* pink pop */
+      --accent-3: #22c55e;        /* green success */
+      --accent-soft: rgba(99, 91, 255, 0.12);
+
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border-subtle: rgba(15, 23, 42, 0.08);
+
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --shadow-soft: 0 10px 30px rgba(15,23,42,0.08);
+      --shadow-strong: 0 18px 50px rgba(15,23,42,0.12);
+
+      --transition-fast: 0.18s ease-out;
+
+      --fab-size: 58px;
+      --fab-gap: 12px;
+      --fab-right: calc(18px + env(safe-area-inset-right, 0px));
+      --fab-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family: "Inter", system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 10% -10%, #e9e7ff 0%, transparent 60%),
+        radial-gradient(1000px 600px at 110% 0%, #ffe4f3 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      line-height:1.5;
+      min-height:100vh;
+      scroll-behavior:smooth;
+    }
+    a{ color:inherit; text-decoration:none; }
+
+    .page-wrapper{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 20px 16px 120px;
+    }
+
+    /* =====================
+       TOPBAR
+       ===================== */
+    .editor-topbar{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items:center;
+      padding: 18px 18px;
+      margin-bottom: 18px;
+      border-radius: 22px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-strong);
+      position: relative;
+      overflow: hidden;
+    }
+    .editor-topbar::before{
+      content:"";
+      position:absolute; inset:-40% -20%;
+      background:
+        radial-gradient(600px 260px at 0% 0%, rgba(99,91,255,.18), transparent 60%),
+        radial-gradient(520px 240px at 100% 0%, rgba(255,106,213,.16), transparent 60%),
+        radial-gradient(520px 240px at 50% 120%, rgba(34,197,94,.10), transparent 60%);
+      pointer-events:none;
+    }
+
+    .editor-topbar-left{
+      display:flex; flex-direction:column; gap:6px;
+      min-width:0;
+      position:relative;
+    }
+    .editor-title-row{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    }
+    .editor-title{
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color:#0b1220;
+    }
+    .editor-subtitle{
+      font-size: 13px; color: var(--text-muted);
+    }
+    .editor-status{
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(34,197,94,0.12);
+      color: #0b7a39;
+      border: 1px solid rgba(34,197,94,0.25);
+
+    }
+
+    .editor-meta{
+      display:grid; gap:0px; margin-top: 2px;
+    }
+    .meta-row{
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--text-muted); line-height:1.2;
+      background: rgba(255,255,255,0.75);
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px dashed rgba(15,23,42,0.06);
+      width: fit-content;
+    }
+    .meta-icon{
+      width:16px; height:16px; color:#64748b; flex-shrink:0;
+    }
+
+    .editor-topbar-right{
+      min-width: 320px;
+      display:flex; flex-direction:column; gap:6px;
+      position:relative;
+    }
+    .invite-id-label{
+      font-size:11px; font-weight:800; color:var(--text-muted);
+      letter-spacing:.12em; text-transform:uppercase;
+    }
+    .invite-id-control{
+      display:flex; align-items:center; gap:8px;
+    }
+    .invite-id-input{
+      flex:1; height:42px; padding:0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+      outline:none;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      box-shadow: 0 1px 0 rgba(15,23,42,0.02);
+    }
+    .invite-id-input::placeholder{ color:#94a3b8; }
+    .invite-id-input:focus{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+      background:#fff;
+    }
+    .invite-id-btn{
+      height:42px; padding:0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: linear-gradient(180deg,#fff, #f5f7ff);
+      color:#111827;
+      font-size:12px; font-weight:800; letter-spacing:.06em;
+      text-transform: uppercase;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+      white-space:nowrap;
+    }
+    .invite-id-btn:hover{
+      transform: translateY(-1px);
+      opacity:0.98;
+      box-shadow: 0 10px 22px rgba(99,91,255,0.16);
+    }
+    .invite-id-btn.ghost{
+      background:#fff; box-shadow:none;
+    }
+    .invite-id-hint{ font-size:11px; color:#7c879a; }
+
+    @media (max-width:820px){
+      .editor-topbar{ grid-template-columns:1fr; }
+      .editor-topbar-right{ min-width:100%; }
+       .editor-status{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 2;
+  }
+    }
+
+
+    /* =====================
+       EDITOR SECTIONS
+       ===================== */
+    .editor-main{ background:transparent; }
+
+    .editor-section{
+      margin-bottom: 14px;
+      padding: 14px 14px 12px;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+    .editor-section::after{
+      content:"";
+      position:absolute; inset:-30% -10% auto auto; height:120px; width:220px;
+      background: radial-gradient(140px 70px at 50% 50%, rgba(99,91,255,.12), transparent 65%);
+      pointer-events:none; opacity:.9;
+      transform: rotate(9deg);
+    }
+    .editor-section-title{
+      font-size:12px; font-weight:800; text-transform:uppercase;
+      letter-spacing:.13em; color:var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .editor-grid-2, .editor-grid-3{ display:grid; gap:10px; }
+    .editor-grid-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .editor-grid-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    @media (max-width:640px){
+      .editor-grid-2, .editor-grid-3{ grid-template-columns:1fr; }
+    }
+
+    .field-group{ margin-bottom:8px; }
+    .field-label{
+      display:block; font-size:13px; font-weight:700;
+      margin-bottom:5px; color:#0f172a;
+    }
+
+    .input, .textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--border-subtle);
+      background: var(--card-soft);
+      padding:10px 11px; font-size:14px;
+      color: var(--text);
+      outline:none;
+      transition: border-color .12s ease, box-shadow .12s ease, background .12s ease, transform .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .input::placeholder, .textarea::placeholder{ color:#94a3b8; }
+    .input:focus, .textarea:focus{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+      background:#fff;
+      transform: translateY(-1px);
+    }
+    .textarea{
+      min-height:80px; resize:vertical; border-radius:14px;
+    }
+    .helper-text{ font-size:11px; color:var(--text-muted); margin-top:3px; }
+
+    /* mini color pickers */
+    .color-input-wrapper{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px; border:1px solid var(--border-subtle);
+      background: var(--card-soft); border-radius:12px;
+    }
+    .color-input-wrapper input[type="color"]{
+      width:36px; height:36px; border:none; background:transparent; cursor:pointer;
+      padding:0; border-radius:8px;
+    }
+    .color-label{ font-size:12px; color:var(--text-muted); font-weight:700; }
+
+    /* =====================
+       THEME SCROLLER + LIVE PREVIEW
+       ===================== */
+    .theme-scroll{
+      display:flex; gap:10px; overflow-x:auto; padding:8px;
+    }
+
+    .theme-option{
+      flex: 0 0 150px;
+      width: 150px;
+      height: 220px;
+      scroll-snap-align: start;
+      border-radius: 16px;
+      border: 0px solid var(--border-subtle);
+      cursor: pointer;
+      position: relative;
+      overflow: visible;
+      padding: 5px;
+      padding-bottom: 28px;
+      background: var(--card-soft);
+      display: flex;
+      flex-direction: column;
+      -webkit-appearance: none;
+      appearance: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .theme-option.is-selected{
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 0 0 2px var(--accent), 0 8px 18px rgba(0,0,0,0.35);
+    }
+
+    /* Eye button stays upper-right only */
+    .theme-preview-btn{
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 5;
+
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      border: 1px solid rgba(15,23,42,0.10);
+      background: rgba(255,255,255,0.95);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .theme-preview-btn:hover{
+      transform: translateY(-1px);
+      background:#f6f7ff;
+    }
+    .theme-preview-btn svg{
+      width: 16px;
+      height: 16px;
+      color:#0f172a;
+      opacity:.9;
+    }
+
+    /* Name BELOW but "overlay/glass tag" */
+    .theme-name-overlay{
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 5px;
+      z-index: 4;
+      padding: 0px 0px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .theme-name{
+      font-size: 12px;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .theme-preview-inner{
+      position: relative;
+      flex: 1;
+      height: 100%;
+      min-height: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0b0f14;
+    }
+
+    .theme-preview-inner .theme-iframe{
+      position: absolute;
+      inset: 0;
+      width: 400%;
+      height: 400%;
+      transform: scale(0.25) translateZ(0);
+      -webkit-transform: scale(0.25) translateZ(0);
+      transform-origin: top left;
+      border: 0;
+      pointer-events: none;
+      background: #0b0f14;
+      display: block;
+    }
+
+    /* =====================
+       ALBUM PHOTO UPLOAD
+       ===================== */
+    .photo-upload-wrapper{
+      border-radius:16px;
+      background: #fff;
+      padding:12px 12px 10px;
+      border: 2px dashed rgba(15,23,42,0.12);
+      transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .photo-upload-wrapper.is-dragover{
+      background: #f3f4ff;
+      border-color: rgba(99,91,255,0.6);
+      box-shadow: 0 0 0 4px rgba(99,91,255,0.10);
+    }
+    .photo-upload-wrapper.is-uploading{ opacity:.8; pointer-events:none; }
+
+    .photo-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+    .photo-thumb, .photo-add-tile{
+      width:90px; height:90px; border-radius:16px;
+      position:relative; overflow:hidden; background:#f1f5f9;
+      display:flex; align-items:center; justify-content:center;
+      border:1px solid rgba(15,23,42,0.06);
+    }
+    .photo-thumb img{ width:100%; height:100%; object-fit:cover; }
+
+    .photo-remove{
+      position:absolute; top:4px; right:4px;
+      width:22px; height:22px; border-radius:999px; border:none;
+      background: rgba(15,23,42,0.86);
+      color:#fff; font-size:14px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .photo-add-tile{
+      border:2px dashed rgba(15,23,42,0.18);
+      background:#fff; cursor:pointer; flex-direction:column; gap:4px;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .photo-add-tile:hover{
+      transform: translateY(-1px);
+      border-color: rgba(99,91,255,0.6);
+      background:#f6f7ff;
+    }
+    .photo-add-icon{
+      width:32px; height:32px; border-radius:999px;
+      border:2px solid rgba(99,91,255,0.55);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; color: var(--accent);
+      background: #eef0ff;
+      font-weight:800;
+    }
+    .photo-add-label{ font-size:11px; color:var(--text-muted); font-weight:700; }
+
+    /* Hero picker button */
+    .photo-hero-btn{
+      position:absolute; left:6px; bottom:6px; height:24px; padding:0 8px;
+      border-radius:999px; border:1px solid rgba(15,23,42,0.18);
+      background: rgba(255,255,255,1.9);
+      color:#0f172a; font-size:10px; font-weight:800;
+      letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
+      display:flex; align-items:center; gap:4px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      box-shadow: 0 6px 12px rgba(15,23,42,0.12);
+    }
+    .photo-hero-btn:hover{
+      transform: translateY(-1px);
+      background:#fff;
+      border-color: rgba(99,91,255,0.6);
+    }
+    .photo-hero-btn.is-hero{
+      background: rgba(99,91,255,0.12);
+      border-color: rgba(255, 255, 255, 0.7);
+      color: #ffffff;
+      cursor:default;
+    }
+    .photo-hero-btn.is-hero:hover{ transform:none; }
+
+    /* =====================
+       SINGLE PHOTO UPLOAD
+       ===================== */
+    .single-photo-upload-wrapper{
+      border-radius:16px; background:#fff; padding:12px;
+      border:2px dashed rgba(15,23,42,0.12);
+      display:flex; flex-direction:column; gap:8px; align-items:center;
+      cursor:pointer;
+      transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .single-photo-upload-wrapper.is-dragover{
+      background:#f3f4ff;
+      border-color: rgba(99,91,255,0.6);
+      box-shadow: 0 0 0 4px rgba(99,91,255,0.10);
+    }
+    .single-photo-thumb{
+      width:100%; max-width:320px; aspect-ratio:16/9;
+      border-radius:12px; overflow:hidden; background:#f1f5f9;
+      border:1px solid var(--border-subtle);
+      position:relative; display:flex; align-items:center; justify-content:center;
+    }
+    .single-photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .single-photo-placeholder{
+      text-align:center; display:flex; flex-direction:column; gap:6px;
+      align-items:center; justify-content:center; color:var(--text-muted); padding:8px;
+      font-weight:700;
+    }
+    .single-photo-remove{
+      position:absolute; top:6px; right:6px;
+      width:26px; height:26px; border-radius:999px; border:none;
+      background: rgba(15,23,42,0.85); color:#fff; font-size:16px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    /* =====================
+       FLOATING ACTIONS
+       ===================== */
+    .floating-actions{
+      position:fixed; right:var(--fab-right); bottom:var(--fab-bottom);
+      display:flex; flex-direction:column; gap:var(--fab-gap);
+      z-index:9999; pointer-events:none;
+      filter: drop-shadow(0 10px 25px rgba(15,23,42,0.18));
+    }
+    .fab-btn{
+      pointer-events:auto;
+      width:var(--fab-size); height:var(--fab-size);
+      border-radius:999px; border:none;
+      background:
+        radial-gradient(120% 120% at 20% 10%, rgba(255,255,255,0.95), rgba(255,255,255,0.8) 45%, rgba(255,255,255,0.7) 70%),
+        linear-gradient(145deg, #ffffff, #eef0ff);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.9),
+        0 12px 24px rgba(99,91,255,0.22),
+        0 3px 10px rgba(15,23,42,0.12);
+      color:#111827;
+      display:grid; place-items:center; cursor:pointer; position:relative;
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
+    }
+    .fab-btn:hover{
+      transform: translateY(-3px) scale(1.04);
+      box-shadow:
+        0 16px 34px rgba(99,91,255,0.28),
+        0 6px 14px rgba(15,23,42,0.14);
+      filter: saturate(1.05);
+    }
+    .fab-btn:active{ transform: translateY(0) scale(0.98); }
+    .fab-btn svg{ width:22px; height:22px; opacity:0.95; }
+
+    @media (max-width:640px){
+      .floating-actions{
+        left:50%; right:auto; bottom:var(--fab-bottom);
+        transform:translateX(-50%);
+        flex-direction:row; align-items:center;
+    
+        padding:8px 10px; border-radius:999px; gap:8px;
+
+      }
+      .fab-btn{ width:52px; height:52px; }
+    }
+
+    /* =====================
+       RECENTS MODAL
+       ===================== */
+    .recent-wrap{
+      display:grid; gap:10px; margin-top:8px; text-align:left;
+      max-height:320px; overflow:auto; padding-right:4px;
+    }
+    .recent-item{
+      border:1px solid var(--border-subtle);
+      border-radius:12px; padding:10px 12px; cursor:pointer;
+      background:#fff;
+      transition: background .12s ease, border-color .12s ease, transform .12s ease;
+      box-shadow: 0 6px 14px rgba(15,23,42,0.06);
+    }
+    .recent-item:hover{
+      background:#f6f7ff;
+      border-color: rgba(99,91,255,0.4);
+      transform: translateY(-1px);
+    }
+    .recent-title{ font-weight:800; font-size:14px; color:#0f172a; }
+    .recent-sub{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+    .recent-empty{
+      font-size:13px; color:var(--text-muted); text-align:center; padding:18px 0;
+    }
+
+    /* Clickable attendees counter */
+    #attendees-row{
+      cursor:pointer; user-select:none;
+      border-radius:10px; transition: background .12s ease, transform .12s ease;
+    }
+    #attendees-row:hover{
+      background: rgba(99,91,255,0.06);
+      transform: translateY(-1px);
+    }
+    #attendees-row:active{ transform: translateY(0); }
+
+    /* ✅ Theme searchbar */
+    .theme-searchbar{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      background:#fff;
+      border:1px solid var(--border-subtle);
+      border-radius:12px;
+      box-shadow: var(--shadow-soft);
+      margin: 6px 6px 10px;
+    }
+
+    .theme-search-icon{
+      width:16px; height:16px;
+      color: var(--text-muted);
+      flex-shrink:0;
+    }
+
+    .theme-search-input{
+      flex:1;
+      border:none; outline:none;
+      font-size:13px;
+      background:transparent;
+      color: var(--text);
+    }
+    .theme-search-input::placeholder{ color:#94a3b8; }
+
+    .theme-search-clear{
+      width:26px; height:26px;
+      border-radius:999px; border:none;
+      background: var(--card-soft);
+      color:#0f172a;
+      font-size:18px; line-height:1;
+      cursor:pointer;
+      display:grid; place-items:center;
+      opacity:.6;
+      transition: opacity .12s ease, transform .12s ease;
+    }
+    .theme-search-clear:hover{ opacity:1; transform: translateY(-1px); }
+
+    .theme-empty{
+      font-size:12px;
+      color: var(--text-muted);
+      padding: 6px 10px 0;
+      text-align:center;
+    }
+
+    /* =====================
+       SEE MORE BUTTON
+       ===================== */
+    .see-more-btn{
+      height:40px;
+      padding:0 16px;
+      border-radius:12px;
+      border:1px solid var(--border-subtle);
+      background: #fff;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+      box-shadow: var(--shadow-soft);
+    }
+    .see-more-btn:hover{
+      transform: translateY(-1px);
+      background:#f6f7ff;
+      box-shadow: 0 10px 22px rgba(99,91,255,0.14);
+    }
+
+    .editor-brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+
+    .editor-logo{
+      width:34px;
+      height:34px;
+      object-fit:contain;
+      border-radius:8px;
+      flex-shrink:0;
+    }
+
+    /* =====================
+   CURRENT THEME ROW
+   ===================== */
+.theme-current-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+ 
+  margin-bottom:8px;
+  border-radius:12px;
+  background: rgba(255,255,255,0.9);
+  border:0px solid var(--border-subtle);
+  
+}
+
+.theme-current-label{
+  font-size:12px;
+  color:var(--text-muted);
+}
+.theme-current-label strong{
+ color: #4338ca;
+}
+
+.theme-current-btn{
+display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid rgba(99,91,255,0.4);
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color:#fff;
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+      cursor:pointer;
+      
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.theme-current-btn:hover{
+  transform: translateY(-1px);
+   background: linear-gradient(135deg, #6366f1, #a855f7);
+ 
+}
+.theme-current-btn svg{
+  width:14px;
+  height:14px;
+}
+
+/* iOS Safari: fix cramped date & time text */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none; /* reduce the native chrome */
+  appearance: none;
+  padding-right: 2.5rem;    /* extra space so text doesn't touch the right edge */
+}
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.checklist li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0px;
+  font-size: 14px;
+  color: #374151; /* Slate gray for clean look */
+}
+
+.check-icon {
+  display: flex;
+  margin-right: 8px;
+}
+
+
+  </style>
+</head>
+
+<body>
+  <div class="page-wrapper">
+
+    <header class="editor-topbar">
+      <div class="editor-topbar-left">
+        <div class="editor-title-row">
+          <div class="editor-brand">
+            <img src="https://minftvflekxdoiubeujy.supabase.co/storage/v1/object/public/invite-photos/inva-logo.png" alt="Inva logo" class="editor-logo" />
+            <h1 class="editor-title">Inva</h1>
+          </div>
+          <span class="editor-status" id="invite-status-pill">Draft</span>
+        </div>
+
+       <div class="editor-subtitle">Create your own wedding invitation website — just fill out your details, choose a theme, and share your link.</div>
+
+
+
+        <div class="editor-meta">
+          <div class="meta-row">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+              <path d="M7 8h6"></path>
+              <path d="M7 12h10"></path>
+              <path d="M7 16h8"></path>
+            </svg>
+            <span id="invite-id-label">New invitation (not saved yet)</span>
+          </div>
+
+          <div class="meta-row" id="attendees-row">
+            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.4"></circle>
+              <path d="M4.5 19.2c0-3.6 3.4-6.2 7.5-6.2s7.5 2.6 7.5 6.2"></path>
+            </svg>
+            <span id="attendees-count-label">0 people attending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-topbar-right">
+        <label class="invite-id-label" for="invite-id-input">Invite ID</label>
+        <div class="invite-id-control">
+          <input id="invite-id-input" class="invite-id-input" placeholder="Enter ID to edit..." autocomplete="off" />
+          <button id="btn-load-invite" class="invite-id-btn" type="button">Load</button>
+          <button id="btn-recent-invite" class="invite-id-btn ghost" type="button">Recent</button>
+        </div>
+        <div class="invite-id-hint">Load an existing invite to update its details.</div>
+      </div>
+    </header>
+
+    <main class="editor-main">
+
+      <!-- THEME / LAYOUT -->
+      <section class="editor-section">
+<h2 class="editor-section-title">Theme & Layout</h2>
+  <p class="helper-text" style="margin-bottom:10px;">
+    Pick a theme. Thumbnails are live previews of the real themes.
+  </p>
+
+  <!-- ✅ Current theme label + preview -->
+  <div class="theme-current-row">
+    <div class="theme-current-label">
+      Current theme:
+      <strong id="current-theme-label">Classic Warm</strong>
+    </div>
+    <button id="btn-current-theme-preview" type="button" class="theme-current-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Preview
+    </button>
+  </div>
+
+        <!-- ✅ Theme search -->
+        <div class="theme-searchbar">
+          <svg class="theme-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+
+          <input id="theme-search-input" class="theme-search-input" type="text"
+            placeholder="Search themes (e.g. vintage, pastel, boho)..." autocomplete="off"/>
+
+          <button id="theme-search-clear" class="theme-search-clear" type="button" aria-label="Clear search">
+            &times;
+          </button>
+        </div>
+
+        <input type="hidden" id="field-theme" />
+        <div class="theme-scroll" id="theme-scroll"></div>
+
+        <div id="theme-empty" class="theme-empty" style="display:none;">
+          No themes match your search.
+        </div>
+
+        <!-- ✅ See more button (goes to themes-select.html) -->
+        <div style="display:flex; justify-content:center; margin-top:8px;">
+          <button id="btn-see-more-themes" type="button" class="see-more-btn">
+            See more themes
+          </button>
+        </div>
+      </section>
+
+      <!-- COUPLE & HEADLINE -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Couple & Headline</h2>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-bride-name">Bride's name</label>
+            <input id="field-bride-name" class="input" placeholder="Alexandra Marie Santos" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-groom-name">Groom's name</label>
+            <input id="field-groom-name" class="input" placeholder="Jamie Rafael Cruz" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="field-tagline">Short headline under names</label>
+          <input id="field-tagline" class="input" placeholder="Together with their families, they joyfully invite you to celebrate their wedding." />
+        </div>
+      </section>
+
+      <!-- DATE & MAIN VENUE LABEL -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Date & Main Details</h2>
+        <div class="editor-grid-3">
+          <div class="field-group">
+            <label class="field-label" for="field-date">Wedding date</label>
+            <input id="field-date" class="input" type="date" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-time">Time</label>
+            <input id="field-time" class="input" type="time" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-main-venue-label">Main venue label</label>
+            <input id="field-main-venue-label" class="input" placeholder="St. John Cathedral • City" />
+          </div>
+        </div>
+      </section>
+
+      <!-- CEREMONY DETAILS -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Ceremony Details</h2>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-ceremony-name">Ceremony venue name</label>
+            <input id="field-ceremony-name" class="input" placeholder="St. John Cathedral" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-ceremony-address">Ceremony address</label>
+            <input id="field-ceremony-address" class="input" placeholder="123 Main Street, City" />
+          </div>
+        </div>
+
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-ceremony-map-url">Ceremony map URL</label>
+            <input id="field-ceremony-map-url" class="input" placeholder="https://maps.google.com/..." />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-ceremony-notes">Ceremony notes</label>
+            <textarea id="field-ceremony-notes" class="textarea" rows="3" placeholder="Please arrive 30 minutes early..."></textarea>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Ceremony photo</label>
+          <div class="single-photo-upload-wrapper" id="ceremony-photo-zone">
+            <div class="single-photo-thumb" id="ceremony-photo-thumb"></div>
+            <input type="file" id="ceremony-photo-input" accept="image/*" style="display:none;" />
+            <p class="helper-text">Click or drag & drop a photo here.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECEPTION DETAILS -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Reception Details</h2>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-reception-name">Reception venue name</label>
+            <input id="field-reception-name" class="input" placeholder="The Glass Garden" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-reception-address">Reception address</label>
+            <input id="field-reception-address" class="input" placeholder="456 Garden Avenue, City" />
+          </div>
+        </div>
+
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-reception-map-url">Reception map URL</label>
+            <input id="field-reception-map-url" class="input" placeholder="https://maps.google.com/..." />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-reception-notes">Reception notes</label>
+            <textarea id="field-reception-notes" class="textarea" rows="3" placeholder="Cocktails at 5:00 PM..."></textarea>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Reception photo</label>
+          <div class="single-photo-upload-wrapper" id="reception-photo-zone">
+            <div class="single-photo-thumb" id="reception-photo-thumb"></div>
+            <input type="file" id="reception-photo-input" accept="image/*" style="display:none;" />
+            <p class="helper-text">Click or drag & drop a photo here.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- DRESS CODE -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Dress Code</h2>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-dress-title">Dress code title</label>
+            <input id="field-dress-title" class="input" placeholder="Modern formal • Neutral tones" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-dress-description">Description</label>
+            <textarea id="field-dress-description" class="textarea" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Suggested palette colors</label>
+          <div class="editor-grid-3">
+            <div class="color-input-wrapper">
+              <input id="field-dress-color1" type="color" value="#FDF5E6" />
+              <span class="color-label">Color 1</span>
+            </div>
+            <div class="color-input-wrapper">
+              <input id="field-dress-color2" type="color" value="#9DC183" />
+              <span class="color-label">Color 2</span>
+            </div>
+            <div class="color-input-wrapper">
+              <input id="field-dress-color3" type="color" value="#D79A9A" />
+              <span class="color-label">Color 3</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPONSORS & ENTOURAGE -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Sponsors & Entourage</h2>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-principal-sponsors">Principal sponsors</label>
+            <textarea id="field-principal-sponsors" class="textarea" rows="4"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-secondary-sponsors">Secondary sponsors</label>
+            <textarea id="field-secondary-sponsors" class="textarea" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-parents-bride">Parents of the bride</label>
+            <textarea id="field-parents-bride" class="textarea" rows="3"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-parents-groom">Parents of the groom</label>
+            <textarea id="field-parents-groom" class="textarea" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-maid-of-honor">Maid of honor & bridesmaids</label>
+            <textarea id="field-maid-of-honor" class="textarea" rows="4"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-best-man">Best man & groomsmen</label>
+            <textarea id="field-best-man" class="textarea" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-flower-girls">Flower girls</label>
+            <textarea id="field-flower-girls" class="textarea" rows="3"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-ring-bearer">Ring bearer</label>
+            <textarea id="field-ring-bearer" class="textarea" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="field-other-roles">Other roles</label>
+          <textarea id="field-other-roles" class="textarea" rows="3"></textarea>
+        </div>
+      </section>
+
+      <!-- STORY & VERSE -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Story & Verse</h2>
+        <div class="field-group">
+          <label class="field-label" for="field-our-story">Our story</label>
+          <textarea id="field-our-story" class="textarea" rows="4"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="field-proposal-story">The proposal</label>
+          <textarea id="field-proposal-story" class="textarea" rows="3"></textarea>
+        </div>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-verse-reference">Verse reference</label>
+            <input id="field-verse-reference" class="input" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-verse-text">Verse text</label>
+            <textarea id="field-verse-text" class="textarea" rows="3"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEDIA -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">Media (Photos & Video)</h2>
+
+        <div class="field-group">
+          <label class="field-label">Photos</label>
+          <div class="photo-upload-wrapper" id="photo-upload-zone">
+            <div class="photo-grid" id="photo-grid"></div>
+            <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none;" />
+            <p class="helper-text" style="margin-top:8px;">
+              Tap the plus or drag & drop images here. First photo becomes the hero image.
+            </p>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="field-media-video-url">Video URL (YouTube embed or MP4)</label>
+          <input id="field-media-video-url" class="input" placeholder="https://www.youtube.com/embed/..." />
+        </div>
+      </section>
+
+      <!-- RSVP SETTINGS -->
+      <section class="editor-section">
+        <h2 class="editor-section-title">RSVP Settings</h2>
+        <div class="editor-grid-2">
+          <div class="field-group">
+            <label class="field-label" for="field-rsvp-deadline">RSVP deadline</label>
+            <input id="field-rsvp-deadline" class="input" type="date" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="field-rsvp-note">RSVP note</label>
+            <textarea id="field-rsvp-note" class="textarea" rows="3"></textarea>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating actions -->
+    <div class="floating-actions">
+      <button id="btn-create-new" class="fab-btn" type="button" aria-label="Create new invitation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+
+      <button id="btn-guest-view" class="fab-btn" type="button" aria-label="Open guest view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+
+      <button id="btn-share-link" class="fab-btn" type="button" aria-label="Share link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/>
+          <circle cx="6" cy="12" r="3"/>
+          <circle cx="18" cy="19" r="3"/>
+          <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/>
+          <line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://minftvflekxdoiubeujy.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pbmZ0dmZsZWt4ZG9pdWJldWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MTc4NjgsImV4cCI6MjA2NjA5Mzg2OH0.Aj0-ts6WzffJRrXDkTMDKjQT4t6pW_-jSUft4md0KJM";
+
+    const INVITE_PHOTO_BUCKET = "invite-photos";
+    const TABLE_INVITES = "invites-new";
+    const TABLE_RSVPS = "rsvps";
+
+    const LOCAL_KEY_DATA = "inviteBuilderData_v4";
+    const LOCAL_KEY_ID = "inviteBuilderId_v4";
+    const LOCAL_KEY_THEME = "inviteBuilderTheme_v4";
+    const LOCAL_KEY_RECENTS = "inviteBuilderRecent_v2";
+
+    const THEMES = [
+      { key:"classic-warm",    name:"Classic Warm",    sub:"Soft gold & terracotta", meta:"Default theme", file:"theme1.html" },
+      { key:"elegant-white",   name:"Elegant White",   sub:"Clean, airy, minimal",   meta:"Bright white",  file:"theme2.html" },
+      { key:"dark-gold",       name:"Dark & Gold",     sub:"Warm, earthy tones",     meta:"Rustic feel",   file:"theme3.html" },
+      { key:"pastel-green",    name:"Pastel Green",    sub:"Soft, fresh palette",    meta:"Light & airy",  file:"theme4.html" },
+      { key:"elegant-maroon",  name:"Elegant Maroon",  sub:"Old-soul look",          meta:"Classic vibe",  file:"theme5.html" },
+      { key:"emerald-vintage", name:"Emerald Vintage", sub:"Emerald & gold",         meta:"Rich feel",     file:"theme6.html" },
+      { key:"elegant-blue",    name:"Elegant Blue",    sub:"Moody & cinematic",      meta:"Gold text",     file:"theme7.html" },
+    ];
+
+    let supabaseClient = null;
+    let currentInviteId = null;
+    let currentTheme = "classic-warm";
+    let data = null;
+    let themeSearchTerm = "";
+
+    /* =====================
+       ✅ AUTOSAVE (RESTORED)
+       ===================== */
+    let isDirty = false;
+    let autoSaveTimer = null;
+    let autoSaveInterval = null;
+
+    const AUTOSAVE_DEBOUNCE_MS = 1200;
+    const AUTOSAVE_INTERVAL_MS = 15000;
+
+    function showAutoSavePill(state){
+      const pill = document.getElementById("invite-status-pill");
+      if(!pill) return;
+
+      if(state === "saving"){
+        pill.textContent = "Saving...";
+        pill.style.background = "rgba(99,91,255,0.12)";
+        pill.style.color = "#4338ca";
+      } else if(state === "saved"){
+        pill.textContent = "Draft • autosaved";
+        pill.style.background = "rgba(34,197,94,0.12)";
+        pill.style.color = "#0b7a39";
+      }
+    }
+
+    function markDirty(){
+      isDirty = true;
+      scheduleAutoSave();
+    }
+
+    function scheduleAutoSave(){
+      clearTimeout(autoSaveTimer);
+
+      autoSaveTimer = setTimeout(async () => {
+        if(!isDirty || !supabaseClient) return;
+
+        try{
+          showAutoSavePill("saving");
+          await saveInvite(false);
+          isDirty = false;
+          showAutoSavePill("saved");
+        }catch(e){
+          console.warn("Autosave failed:", e);
+        }
+      }, AUTOSAVE_DEBOUNCE_MS);
+    }
+
+    function startAutoSaveLoop(){
+      clearInterval(autoSaveInterval);
+      autoSaveInterval = setInterval(() => {
+        if(isDirty) scheduleAutoSave();
+      }, AUTOSAVE_INTERVAL_MS);
+    }
+
+    /* =====================
+       ✅ IMAGE COMPRESSION
+       ===================== */
+    async function compressImage(file, opts = {}) {
+      const {
+        maxWidth = 1600,
+        maxHeight = 1600,
+        quality = 0.82
+      } = opts;
+
+      if (!file || !file.type.startsWith("image/")) return file;
+
+      const bitmap = await createImageBitmap(file);
+      let { width, height } = bitmap;
+
+      const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+      const targetW = Math.round(width * ratio);
+      const targetH = Math.round(height * ratio);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+
+      const blob = await new Promise(resolve => {
+        canvas.toBlob(
+          b => resolve(b),
+          "image/jpeg",
+          quality
+        );
+      });
+
+      if (!blob) return file;
+
+      const compressedFile = new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+        type: "image/jpeg"
+      });
+
+      return compressedFile;
+    }
+
+    /* =====================
+       DEFAULT DATA
+       ===================== */
+    function getDefaultInviteData() {
+      return {
+        bride: "",
+        groom: "",
+        tagline: "Together with their families, they joyfully invite you to celebrate their wedding.",
+        date: "",
+        time: "",
+        timezone: "",
+        main_venue_label: "St. John Cathedral • City",
+
+        theme_photos: {},
+
+        ceremony: {
+          name: "St. John Cathedral",
+          address: "123 Main Street, City",
+          map_url: "",
+          notes: "",
+          photo_url: ""
+        },
+        reception: {
+          name: "The Glass Garden",
+          address: "456 Garden Avenue, City",
+          map_url: "",
+          notes: "",
+          photo_url: ""
+        },
+        dress_code: {
+          title: "Modern formal • Neutral tones",
+          description: "We'd love for everyone to come in modern formal attire in soft neutral tones.",
+          colors: ["#FDF5E6", "#9DC183", "#D79A9A"]
+        },
+        sponsors: {
+          principal: "",
+          secondary: "",
+          parents_bride: "",
+          parents_groom: "",
+          maid_of_honor_block: "",
+          best_man_block: "",
+          flower_girls: "",
+          ring_bearer: "",
+          other_roles: ""
+        },
+        story: { our_story: "", proposal_story: "" },
+        verse: { reference: "", text: "" },
+        media: { photos: [], video_url: "" },
+        rsvp_settings: { deadline: "", note: "" }
+      };
+    }
+
+    /* =====================
+       LOCAL STORAGE
+       ===================== */
+    function loadLocal() {
+      try {
+        const rawData = localStorage.getItem(LOCAL_KEY_DATA);
+        const rawId = localStorage.getItem(LOCAL_KEY_ID);
+        const rawTheme = localStorage.getItem(LOCAL_KEY_THEME);
+
+        data = rawData ? JSON.parse(rawData) : getDefaultInviteData();
+        currentInviteId = rawId || null;
+        currentTheme = rawTheme || data?.theme || "classic-warm";
+
+        if (!data.theme_photos || typeof data.theme_photos !== "object") data.theme_photos = {};
+      } catch (e) {
+        data = getDefaultInviteData();
+        currentInviteId = null;
+        currentTheme = "classic-warm";
+      }
+    }
+
+    function saveLocal() {
+      data.theme = currentTheme;
+      localStorage.setItem(LOCAL_KEY_DATA, JSON.stringify(data));
+      if (currentInviteId) localStorage.setItem(LOCAL_KEY_ID, currentInviteId);
+      localStorage.setItem(LOCAL_KEY_THEME, currentTheme);
+    }
+
+    function getFilteredThemes() {
+      const term = themeSearchTerm.trim().toLowerCase();
+      if (!term) return THEMES;
+
+      return THEMES.filter(t => {
+        const hay = [
+          t.key,
+          t.name,
+          t.sub,
+          t.meta,
+          t.file
+        ].filter(Boolean).join(" ").toLowerCase();
+
+        return hay.includes(term);
+      });
+    }
+
+    function generateInviteId(length = 8) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let result = "";
+      const array = new Uint32Array(length);
+      window.crypto.getRandomValues(array);
+      for (let i = 0; i < length; i++) result += chars[array[i] % chars.length];
+      return result;
+    }
+
+    function getDeep(obj, path) {
+      return path.reduce((o, key) => (o && o[key] != null ? o[key] : ""), obj);
+    }
+    function setDeep(obj, path, value) {
+      let curr = obj;
+      for (let i = 0; i < path.length - 1; i++) {
+        const k = path[i];
+        if (!curr[k] || typeof curr[k] !== "object") curr[k] = {};
+        curr = curr[k];
+      }
+      curr[path[path.length - 1]] = value;
+    }
+
+    /* =====================
+       FIELD BINDINGS
+       ===================== */
+    const fieldBindings = [
+      { id: "field-bride-name", path: ["bride"] },
+      { id: "field-groom-name", path: ["groom"] },
+      { id: "field-tagline", path: ["tagline"] },
+
+      { id: "field-date", path: ["date"] },
+      { id: "field-time", path: ["time"] },
+      { id: "field-main-venue-label", path: ["main_venue_label"] },
+
+      { id: "field-ceremony-name", path: ["ceremony", "name"] },
+      { id: "field-ceremony-address", path: ["ceremony", "address"] },
+      { id: "field-ceremony-map-url", path: ["ceremony", "map_url"] },
+      { id: "field-ceremony-notes", path: ["ceremony", "notes"] },
+
+      { id: "field-reception-name", path: ["reception", "name"] },
+      { id: "field-reception-address", path: ["reception", "address"] },
+      { id: "field-reception-map-url", path: ["reception", "map_url"] },
+      { id: "field-reception-notes", path: ["reception", "notes"] },
+
+      { id: "field-dress-title", path: ["dress_code", "title"] },
+      { id: "field-dress-description", path: ["dress_code", "description"] },
+      { id: "field-dress-color1", path: ["dress_code", "colors", 0] },
+      { id: "field-dress-color2", path: ["dress_code", "colors", 1] },
+      { id: "field-dress-color3", path: ["dress_code", "colors", 2] },
+
+      { id: "field-principal-sponsors", path: ["sponsors", "principal"] },
+      { id: "field-secondary-sponsors", path: ["sponsors", "secondary"] },
+      { id: "field-parents-bride", path: ["sponsors", "parents_bride"] },
+      { id: "field-parents-groom", path: ["sponsors", "parents_groom"] },
+      { id: "field-maid-of-honor", path: ["sponsors", "maid_of_honor_block"] },
+      { id: "field-best-man", path: ["sponsors", "best_man_block"] },
+      { id: "field-flower-girls", path: ["sponsors", "flower_girls"] },
+      { id: "field-ring-bearer", path: ["sponsors", "ring_bearer"] },
+      { id: "field-other-roles", path: ["sponsors", "other_roles"] },
+
+      { id: "field-our-story", path: ["story", "our_story"] },
+      { id: "field-proposal-story", path: ["story", "proposal_story"] },
+
+      { id: "field-verse-reference", path: ["verse", "reference"] },
+      { id: "field-verse-text", path: ["verse", "text"] },
+
+      { id: "field-media-video-url", path: ["media", "video_url"] },
+
+      { id: "field-rsvp-deadline", path: ["rsvp_settings", "deadline"] },
+      { id: "field-rsvp-note", path: ["rsvp_settings", "note"] }
+    ];
+
+    /* =====================
+       RECENTS
+       ===================== */
+    function getRecentInvites() {
+      try {
+        const raw = localStorage.getItem(LOCAL_KEY_RECENTS);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function saveRecentInvites(list) {
+      localStorage.setItem(LOCAL_KEY_RECENTS, JSON.stringify(list));
+    }
+    function addRecentInvite({ id, bride, groom }) {
+      if (!id) return;
+      const list = getRecentInvites();
+      const filtered = list.filter(x => x.id !== id);
+      filtered.unshift({
+        id,
+        bride: bride || "Bride",
+        groom: groom || "Groom",
+        updated_at: Date.now()
+      });
+      saveRecentInvites(filtered.slice(0, 20));
+    }
+
+    async function showRecentModal() {
+      const list = getRecentInvites().sort((a,b) => b.updated_at - a.updated_at);
+      let html = "";
+      if (!list.length) {
+        html = `<div class="recent-empty">No recent invitations yet.</div>`;
+      } else {
+        html = `<div class="recent-wrap">
+          ${list.map(item => `
+            <div class="recent-item" data-id="${item.id}">
+              <div class="recent-title">${item.bride} & ${item.groom}</div>
+              <div class="recent-sub">Invite ID: ${item.id}</div>
+            </div>
+          `).join("")}
+        </div>`;
+      }
+
+      await Swal.fire({
+        title: "Recent Invitations",
+        html,
+        showCancelButton: true,
+        cancelButtonText: "Close",
+        showConfirmButton: false,
+        background: "#ffffff",
+        color: "#0f172a",
+        didOpen: () => {
+          document.querySelectorAll(".recent-item").forEach(el => {
+            el.addEventListener("click", async () => {
+              const id = el.getAttribute("data-id");
+              if (!id) return;
+              Swal.close();
+              await handleLoadById(id);
+            });
+          });
+        }
+      });
+    }
+
+    /* =====================
+       ATTENDEES COUNT
+       ===================== */
+    let attendeeCount = 0;
+    let rsvpChannel = null;
+
+    function updateAttendeesLabel() {
+      const el = document.getElementById("attendees-count-label");
+      if (!el) return;
+      const n = Number(attendeeCount || 0);
+      el.textContent = `${n} ${n === 1 ? "person" : "people"} attending`;
+    }
+
+    async function fetchAttendeeCount() {
+      if (!supabaseClient || !currentInviteId) {
+        attendeeCount = 0;
+        updateAttendeesLabel();
+        return;
+      }
+
+      try {
+        const inviteCols = ["invite_id", "host_id", "invite_code", "inviteid"];
+        let rows = null;
+        let lastError = null;
+
+        for (const col of inviteCols) {
+          const res = await supabaseClient
+            .from(TABLE_RSVPS)
+            .select(`persons,status,${col}`)
+            .eq(col, currentInviteId);
+
+          if (!res.error) {
+            rows = res.data || [];
+            break;
+          }
+          lastError = res.error;
+        }
+        if (!rows) throw lastError;
+
+        const YES_STATUSES = new Set(["attending","going","yes","confirmed","accept","accepted"]);
+        attendeeCount = rows.reduce((sum, r) => {
+          const st = String(r.status || "").trim().toLowerCase();
+          if (!YES_STATUSES.has(st)) return sum;
+          const p = parseInt(r.persons, 10);
+          return sum + (isNaN(p) || p < 1 ? 1 : p);
+        }, 0);
+
+      } catch (e) {
+        console.warn("fetchAttendeeCount error:", e);
+        attendeeCount = 0;
+      }
+
+      updateAttendeesLabel();
+    }
+
+    async function fetchAttendeeList() {
+      if (!supabaseClient || !currentInviteId) return [];
+
+      const inviteCols = ["invite_id", "host_id", "invite_code", "inviteid"];
+      let rows = null;
+      let lastError = null;
+
+      for (const col of inviteCols) {
+        const res = await supabaseClient
+          .from(TABLE_RSVPS)
+          .select(`name,persons,status,created_at,message,${col}`)
+          .eq(col, currentInviteId)
+          .order("created_at", { ascending: true });
+
+        if (!res.error) {
+          rows = res.data || [];
+          break;
+        }
+        lastError = res.error;
+      }
+
+      if (!rows) {
+        console.warn("fetchAttendeeList error:", lastError);
+        return [];
+      }
+
+      const YES_STATUSES = new Set(["attending","going","yes","confirmed","accept","accepted"]);
+      return rows.filter(r => YES_STATUSES.has(String(r.status || "").trim().toLowerCase()));
+    }
+
+    async function showAttendeesModal() {
+      if (!currentInviteId) {
+        Swal.fire({ icon: "info", title: "Save or load an invite first." });
+        return;
+      }
+
+      const list = await fetchAttendeeList();
+      if (!list.length) {
+        Swal.fire({
+          icon: "info",
+          title: "No attendees yet",
+          text: "Nobody has confirmed attendance so far.",
+          background: "#fff",
+          color: "#0f172a"
+        });
+        return;
+      }
+
+      const html = `
+        <div style="text-align:left; max-height:320px; overflow:auto; padding-right:6px;">
+          ${list.map((r, i) => {
+            const p = parseInt(r.persons, 10);
+            const personsLabel = (!isNaN(p) && p > 1) ? ` • ${p} persons` : "";
+            const msg = r.message ? `<div style="font-size:12px;opacity:.7;margin-top:4px;">"${r.message}"</div>` : "";
+            return `
+              <div style="padding:10px 12px; border:1px solid rgba(15,23,42,0.08); border-radius:10px; margin-bottom:8px; background:#fff; box-shadow:0 6px 12px rgba(15,23,42,0.05);">
+                <div style="font-weight:800; font-size:14px;">
+                  ${i+1}. ${r.name || "Guest"}${personsLabel}
+                </div>
+                ${msg}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      Swal.fire({
+        title: `Attending (${attendeeCount})`,
+        html,
+        showConfirmButton: true,
+        confirmButtonText: "Close",
+        background: "#fff",
+        color: "#0f172a",
+        width: 520
+      });
+    }
+
+    function subscribeToRsvps() {
+      if (!supabaseClient || !currentInviteId) return;
+
+      if (rsvpChannel) {
+        supabaseClient.removeChannel(rsvpChannel);
+        rsvpChannel = null;
+      }
+
+      rsvpChannel = supabaseClient
+        .channel(`rsvps-${currentInviteId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: TABLE_RSVPS },
+          (payload) => {
+            const row = payload.new || payload.old || {};
+            const matches =
+              row.invite_id === currentInviteId ||
+              row.host_id === currentInviteId ||
+              row.invite_code === currentInviteId ||
+              row.inviteid === currentInviteId;
+            if (matches) fetchAttendeeCount();
+          }
+        )
+        .subscribe();
+    }
+
+    async function copyToClipboard(text){
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (e) {}
+      }
+
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        ta.style.left = "-9999px";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /* =====================
+       THEME UI (LIVE PREVIEW)
+       ===================== */
+    function buildThemePreviewUrl(themeKey){
+      const theme = THEMES.find(t => t.key === themeKey) || THEMES[0];
+      const previewId = currentInviteId || "preview";
+      const currentPath = window.location.pathname;
+      const guestPath = currentPath.replace(/[^/]+$/, theme.file);
+      return `${window.location.origin}${guestPath}?id=${encodeURIComponent(previewId)}&preview=1`;
+    }
+
+    function renderThemeCards() {
+      const wrap = document.getElementById("theme-scroll");
+      const emptyEl = document.getElementById("theme-empty");
+      if (!wrap) return;
+
+      const list = getFilteredThemes().slice();
+      wrap.innerHTML = "";
+
+      if (emptyEl) emptyEl.style.display = list.length ? "none" : "block";
+
+      list.forEach(t => {
+        const card = document.createElement("div");
+        card.className = "theme-option";
+        card.setAttribute("data-theme", t.key);
+        card.id = `theme-card-${t.key}`;
+        card.setAttribute("role", "button");
+        card.tabIndex = 0;
+
+        const previewId = currentInviteId || "preview";
+        const src = `${t.file}?id=${encodeURIComponent(previewId)}&preview=1`;
+
+        card.innerHTML = `
+          <button class="theme-preview-btn" type="button" data-theme="${t.key}" aria-label="Preview ${t.name}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+
+          <div class="theme-preview-inner">
+            <iframe class="theme-iframe" src="${src}" loading="lazy"></iframe>
+          </div>
+
+          <div class="theme-name-overlay">
+            <div class="theme-name">${t.name}</div>
+          </div>
+        `;
+
+        wrap.appendChild(card);
+      });
+
+      document.querySelectorAll(".theme-preview-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const themeKey = btn.getAttribute("data-theme");
+          window.open(buildThemePreviewUrl(themeKey), "_blank");
+        });
+      });
+    }
+
+    function updateCurrentThemeRow() {
+  const labelEl = document.getElementById("current-theme-label");
+  const previewBtn = document.getElementById("btn-current-theme-preview");
+
+  const theme = THEMES.find(t => t.key === currentTheme) || THEMES[0];
+
+  if (labelEl && theme) {
+    labelEl.textContent = theme.name;
+  }
+
+  if (previewBtn) {
+    previewBtn.onclick = () => {
+      window.open(buildThemePreviewUrl(currentTheme), "_blank");
+    };
+  }
+}
+
+
+    function renderThemeThumbnails() {
+      document.querySelectorAll(".theme-option").forEach(el => {
+        const key = el.getAttribute("data-theme");
+        el.classList.toggle("is-selected", key === currentTheme);
+      });
+      const themeInput = document.getElementById("field-theme");
+      if (themeInput) themeInput.value = currentTheme;
+    }
+
+    function bindThemeCardClicks() {
+      document.querySelectorAll(".theme-option").forEach(card => {
+        const themeKey = card.getAttribute("data-theme");
+
+        const pick = () => {
+          currentTheme = themeKey;
+          saveLocal();
+          renderThemeThumbnails();
+          markDirty();
+        };
+
+        card.onclick = pick;
+        card.onkeydown = (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            pick();
+          }
+        };
+      });
+
+      document.querySelectorAll(".theme-preview-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const themeKey = btn.getAttribute("data-theme");
+          window.open(buildThemePreviewUrl(themeKey), "_blank");
+        });
+      });
+    }
+
+    function refreshThemeSection(keepScroll = true) {
+      const scroller = document.getElementById("theme-scroll");
+      const prevScrollLeft = keepScroll && scroller ? scroller.scrollLeft : 0;
+
+      renderThemeCards();
+      bindThemeCardClicks();
+      renderThemeThumbnails();
+       updateCurrentThemeRow(); 
+
+      if (keepScroll && scroller) scroller.scrollLeft = prevScrollLeft;
+    }
+
+    /* =====================
+       ALBUM UPLOADER
+       ===================== */
+    function renderPhotoThumbnails() {
+      const grid = document.getElementById("photo-grid");
+      if (!grid) return;
+
+      const photos = Array.isArray(data.media.photos) ? data.media.photos : [];
+      grid.innerHTML = "";
+
+      photos.forEach((url, index) => {
+        const item = document.createElement("div");
+        item.className = "photo-thumb";
+        item.innerHTML = `
+          <img src="${url}" alt="Photo ${index + 1}" />
+          <button
+            type="button"
+            class="photo-hero-btn ${index === 0 ? "is-hero" : ""}"
+            data-index="${index}"
+            ${index === 0 ? "disabled" : ""}
+            title="${index === 0 ? "This is the hero photo" : "Make this the hero photo"}"
+          >
+            ${index === 0 ? "Hero" : "Set Hero"}
+          </button>
+          <button type="button" class="photo-remove" data-index="${index}">&times;</button>
+        `;
+        grid.appendChild(item);
+      });
+
+      const addTile = document.createElement("button");
+      addTile.type = "button";
+      addTile.className = "photo-add-tile";
+      addTile.innerHTML = `
+        <span class="photo-add-icon">+</span>
+        <span class="photo-add-label">Add photos</span>
+      `;
+      grid.appendChild(addTile);
+
+      grid.querySelectorAll(".photo-remove").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const index = parseInt(btn.dataset.index, 10);
+          photos.splice(index, 1);
+          data.media.photos = photos;
+          saveLocal();
+          renderPhotoThumbnails();
+          markDirty();
+        });
+      });
+
+      grid.querySelectorAll(".photo-hero-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const index = parseInt(btn.dataset.index, 10);
+          if (index === 0 || Number.isNaN(index)) return;
+
+          const picked = photos.splice(index, 1)[0];
+          photos.unshift(picked);
+
+          data.media.photos = photos;
+          saveLocal();
+          renderPhotoThumbnails();
+          markDirty();
+        });
+      });
+    }
+
+    async function uploadPhotoFile(file) {
+      if (!supabaseClient) return;
+
+      if (!currentInviteId) {
+        currentInviteId = generateInviteId();
+        saveLocal();
+        updateInviteIdLabel();
+        refreshThemeSection(false);
+      }
+
+      const compressed = await compressImage(file, { maxWidth: 1700, maxHeight: 1700, quality: 0.82 });
+
+      const ext = "jpg";
+      const path = `invites/${currentInviteId}/album-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from(INVITE_PHOTO_BUCKET)
+        .upload(path, compressed, { cacheControl: "3600", upsert: false, contentType: "image/jpeg" });
+
+      if (uploadError) {
+        console.error(uploadError);
+        Swal.fire({ icon: "error", title: "Upload failed", text: "Album photo upload failed." });
+        return;
+      }
+
+      const { data: publicData } = supabaseClient.storage.from(INVITE_PHOTO_BUCKET).getPublicUrl(path);
+      if (!publicData?.publicUrl) return;
+
+      if (!Array.isArray(data.media.photos)) data.media.photos = [];
+      data.media.photos.push(publicData.publicUrl);
+
+      saveLocal();
+      renderPhotoThumbnails();
+      markDirty();
+    }
+
+    async function handlePhotoFiles(files) {
+      if (!files?.length) return;
+      const zone = document.getElementById("photo-upload-zone");
+      zone?.classList.add("is-uploading");
+      try {
+        for (const f of files) if (f.type.startsWith("image/")) await uploadPhotoFile(f);
+      } finally {
+        zone?.classList.remove("is-uploading");
+      }
+    }
+
+    function setupPhotoUpload() {
+      const fileInput = document.getElementById("photo-file-input");
+      const uploadZone = document.getElementById("photo-upload-zone");
+      if (!fileInput || !uploadZone) return;
+
+      uploadZone.addEventListener("click", (e) => {
+        if (e.target.closest(".photo-add-tile") || e.target.closest("#photo-upload-zone")) fileInput.click();
+      });
+
+      fileInput.addEventListener("change", (e) => {
+        handlePhotoFiles(Array.from(e.target.files || []));
+        fileInput.value = "";
+      });
+
+      ["dragenter","dragover"].forEach(evt =>
+        uploadZone.addEventListener(evt, (e) => {
+          e.preventDefault(); e.stopPropagation();
+          uploadZone.classList.add("is-dragover");
+        })
+      );
+
+      ["dragleave","drop"].forEach(evt =>
+        uploadZone.addEventListener(evt, (e) => {
+          e.preventDefault(); e.stopPropagation();
+          uploadZone.classList.remove("is-dragover");
+        })
+      );
+
+      uploadZone.addEventListener("drop", (e) => {
+        const files = Array.from(e.dataTransfer?.files || []).filter(f => f.type.startsWith("image/"));
+        handlePhotoFiles(files);
+      });
+
+      renderPhotoThumbnails();
+    }
+
+    /* =====================
+       SINGLE PHOTO UPLOADERS
+       ===================== */
+    function renderSinglePhoto(kind) {
+      const thumb = document.getElementById(`${kind}-photo-thumb`);
+      if (!thumb) return;
+
+      const url = data?.[kind]?.photo_url || "";
+      thumb.innerHTML = "";
+
+      if (url) {
+        thumb.innerHTML = `
+          <img src="${url}" alt="${kind} photo"/>
+          <button type="button" class="single-photo-remove" aria-label="Remove photo">&times;</button>
+        `;
+        thumb.querySelector(".single-photo-remove").addEventListener("click", (e) => {
+          e.stopPropagation();
+          data[kind].photo_url = "";
+          saveLocal();
+          renderSinglePhoto(kind);
+          markDirty();
+        });
+      } else {
+        thumb.innerHTML = `
+          <div class="single-photo-placeholder">
+            <div class="photo-add-icon">+</div>
+            <div class="photo-add-label">Add photo</div>
+          </div>
+        `;
+      }
+    }
+
+    async function uploadSinglePhotoFile(file, kind) {
+      if (!supabaseClient) return;
+
+      if (!currentInviteId) {
+        currentInviteId = generateInviteId();
+        saveLocal();
+        updateInviteIdLabel();
+        refreshThemeSection(false);
+      }
+
+      const compressed = await compressImage(file, { maxWidth: 1700, maxHeight: 1700, quality: 0.82 });
+
+      const ext = "jpg";
+      const path = `invites/${currentInviteId}/${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error } = await supabaseClient.storage
+        .from(INVITE_PHOTO_BUCKET)
+        .upload(path, compressed, { cacheControl: "3600", upsert: false, contentType: "image/jpeg" });
+
+      if (error) {
+        console.error(error);
+        Swal.fire({ icon: "error", title: "Upload failed", text: `${kind} photo upload failed.` });
+        return;
+      }
+
+      const { data: publicData } = supabaseClient.storage.from(INVITE_PHOTO_BUCKET).getPublicUrl(path);
+      if (!publicData?.publicUrl) return;
+
+      data[kind].photo_url = publicData.publicUrl;
+      saveLocal();
+      renderSinglePhoto(kind);
+      markDirty();
+    }
+
+    function setupSinglePhotoUpload(kind) {
+      const input = document.getElementById(`${kind}-photo-input`);
+      const zone = document.getElementById(`${kind}-photo-zone`);
+      if (!input || !zone) return;
+
+      zone.addEventListener("click", () => input.click());
+
+      input.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (file && file.type.startsWith("image/")) uploadSinglePhotoFile(file, kind);
+        input.value = "";
+      });
+
+      ["dragenter","dragover"].forEach(evt =>
+        zone.addEventListener(evt, (e) => {
+          e.preventDefault(); e.stopPropagation();
+          zone.classList.add("is-dragover");
+        })
+      );
+
+      ["dragleave","drop"].forEach(evt =>
+        zone.addEventListener(evt, (e) => {
+          e.preventDefault(); e.stopPropagation();
+          zone.classList.remove("is-dragover");
+        })
+      );
+
+      zone.addEventListener("drop", (e) => {
+        const file = Array.from(e.dataTransfer?.files || []).find(f => f.type.startsWith("image/"));
+        if (file) uploadSinglePhotoFile(file, kind);
+      });
+
+      renderSinglePhoto(kind);
+    }
+
+    /* =====================
+       FORM RENDER + LISTENERS
+       ===================== */
+    function renderForm() {
+      renderThemeThumbnails();
+
+      fieldBindings.forEach(({ id, path }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = getDeep(data, path) || "";
+      });
+
+      renderPhotoThumbnails();
+      renderSinglePhoto("ceremony");
+      renderSinglePhoto("reception");
+      updateInviteIdLabel();
+
+      fetchAttendeeCount();
+      subscribeToRsvps();
+    }
+
+    function updateInviteIdLabel() {
+      const label = document.getElementById("invite-id-label");
+      const input = document.getElementById("invite-id-input");
+
+      if (label) {
+        label.textContent = currentInviteId
+          ? `Current invite ID: ${currentInviteId}`
+          : "New invitation (not saved yet)";
+      }
+      if (input) input.value = currentInviteId || "";
+    }
+
+    function attachFieldListeners() {
+      fieldBindings.forEach(({ id, path }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const evt = (el.type === "date" || el.type === "time" || el.type === "color") ? "change" : "input";
+        el.addEventListener(evt, () => {
+          setDeep(data, path, el.value);
+          saveLocal();
+          markDirty();
+        });
+      });
+
+      setupPhotoUpload();
+      setupSinglePhotoUpload("ceremony");
+      setupSinglePhotoUpload("reception");
+    }
+
+    /* =====================
+       SAVE INVITE
+       ===================== */
+    async function saveInvite(showToast = true) {
+      if (!supabaseClient) return null;
+
+      if (!currentInviteId) currentInviteId = generateInviteId();
+
+      const row = {
+        id: currentInviteId,
+        host_id: currentInviteId,
+        theme: currentTheme,
+
+        bride: data.bride || null,
+        groom: data.groom || null,
+        tagline: data.tagline || null,
+
+        wedding_date: data.date || null,
+        wedding_time: data.time || null,
+        timezone: data.timezone || null,
+        main_venue_label: data.main_venue_label || null,
+
+        ceremony_name: data.ceremony?.name || null,
+        ceremony_address: data.ceremony?.address || null,
+        ceremony_map_url: data.ceremony?.map_url || null,
+        ceremony_notes: data.ceremony?.notes || null,
+        ceremony_photo_url: data.ceremony?.photo_url || null,
+
+        reception_name: data.reception?.name || null,
+        reception_address: data.reception?.address || null,
+        reception_map_url: data.reception?.map_url || null,
+        reception_notes: data.reception?.notes || null,
+        reception_photo_url: data.reception?.photo_url || null,
+
+        dress_title: data.dress_code?.title || null,
+        dress_description: data.dress_code?.description || null,
+        dress_color1: data.dress_code?.colors?.[0] || null,
+        dress_color2: data.dress_code?.colors?.[1] || null,
+        dress_color3: data.dress_code?.colors?.[2] || null,
+
+        principal_sponsors: data.sponsors?.principal || null,
+        secondary_sponsors: data.sponsors?.secondary || null,
+        parents_bride: data.sponsors?.parents_bride || null,
+        parents_groom: data.sponsors?.parents_groom || null,
+        maid_of_honor_block: data.sponsors?.maid_of_honor_block || null,
+        best_man_block: data.sponsors?.best_man_block || null,
+        flower_girls: data.sponsors?.flower_girls || null,
+        ring_bearer: data.sponsors?.ring_bearer || null,
+        other_roles: data.sponsors?.other_roles || null,
+
+        our_story: data.story?.our_story || null,
+        proposal_story: data.story?.proposal_story || null,
+
+        verse_reference: data.verse?.reference || null,
+        verse_text: data.verse?.text || null,
+
+        media_photos: Array.isArray(data.media?.photos) ? data.media.photos : null,
+        media_video_url: data.media?.video_url || null,
+
+        rsvp_deadline: data.rsvp_settings?.deadline || null,
+        rsvp_note: data.rsvp_settings?.note || null,
+
+        theme_photos: data.theme_photos || null
+      };
+
+      const { error } = await supabaseClient
+        .from(TABLE_INVITES)
+        .upsert(row, { onConflict: "id" });
+
+      if (error) {
+        console.error("Save error:", error);
+        Swal.fire({ icon: "error", title: "Save failed", text: "Check RLS or table schema." });
+        return null;
+      }
+
+      saveLocal();
+      updateInviteIdLabel();
+      refreshThemeSection(true);
+
+      addRecentInvite({ id: currentInviteId, bride: data?.bride, groom: data?.groom });
+      await fetchAttendeeCount();
+
+      if (showToast) {
+        Swal.fire({
+          icon: "success",
+          title: "Saved",
+          text: "Invitation saved!",
+          background: "#fff",
+          color: "#0f172a"
+        });
+      }
+      return currentInviteId;
+    }
+
+    /* =====================
+       GUEST URL
+       ===================== */
+    function getGuestTemplatePath() {
+      const currentPath = window.location.pathname;
+      const theme = THEMES.find(t => t.key === currentTheme) || THEMES[0];
+      return currentPath.replace(/[^/]+$/, theme.file);
+    }
+
+    function buildGuestUrl(inviteId) {
+      const guestPath = getGuestTemplatePath();
+      return `${window.location.origin}${guestPath}?id=${encodeURIComponent(inviteId)}`;
+    }
+
+    async function handleShareClick() {
+      const id = await saveInvite(false);
+      if (!id) return;
+
+      const url = buildGuestUrl(id);
+      const copied = await copyToClipboard(url);
+
+      Swal.fire({
+        icon: copied ? "success" : "info",
+        title: copied ? "Link copied ✅" : "Copy link",
+        background: "#fff",
+        color: "#0f172a",
+        html: `
+          <p style="margin-bottom:6px;">Send this link to your guests:</p>
+          <code style="display:block; word-break:break-all; padding:8px 10px; background:#f0f3f9; border-radius:8px; border:1px solid rgba(15,23,42,0.08);">${url}</code>
+          ${copied ? "" : `<p style="font-size:12px; margin-top:8px; opacity:.75;">Tap and hold the link to copy.</p>`}
+        `
+      });
+    }
+
+    async function handleGuestViewClick() {
+      const id = await saveInvite(false);
+      if (!id) return;
+      window.open(buildGuestUrl(id), "_blank");
+    }
+
+    async function handleCreateNew() {
+      const res = await Swal.fire({
+        icon: "question",
+        title: "Create a new invitation?",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        background: "#fff",
+        color: "#0f172a"
+      });
+      if (!res.isConfirmed) return;
+
+      currentInviteId = generateInviteId();
+      currentTheme = "classic-warm";
+      data = getDefaultInviteData();
+
+      saveLocal();
+
+      if (rsvpChannel) {
+        supabaseClient.removeChannel(rsvpChannel);
+        rsvpChannel = null;
+      }
+
+      updateInviteIdLabel();
+      refreshThemeSection(false);
+      renderForm();
+
+      if (supabaseClient) {
+        await saveInvite(false);
+        isDirty = false;
+        showAutoSavePill("saved");
+      }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("id", currentInviteId);
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    async function autoCreateNewInviteSilent() {
+      currentInviteId = generateInviteId();
+      currentTheme = "classic-warm";
+      data = getDefaultInviteData();
+
+      saveLocal();
+
+      if (rsvpChannel) {
+        supabaseClient.removeChannel(rsvpChannel);
+        rsvpChannel = null;
+      }
+
+      updateInviteIdLabel();
+      refreshThemeSection(false);
+      renderForm();
+
+      if (supabaseClient) {
+        await saveInvite(false);
+        isDirty = false;
+        showAutoSavePill("saved");
+      }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("id", currentInviteId);
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    /* =====================
+       LOAD INVITE
+       ===================== */
+    async function loadInviteFromSupabaseById(id) {
+      const cleanId = String(id || "").trim();
+      if (!cleanId) return false;
+
+      const { data: row, error } = await supabaseClient
+        .from(TABLE_INVITES)
+        .select("*")
+        .eq("id", cleanId)
+        .maybeSingle();
+
+      if (error || !row) return false;
+
+      currentInviteId = row.id;
+      currentTheme = row.theme || "classic-warm";
+
+      const loaded = getDefaultInviteData();
+      loaded.bride = row.bride || "";
+      loaded.groom = row.groom || "";
+      loaded.tagline = row.tagline || loaded.tagline;
+      loaded.date = row.wedding_date || "";
+      loaded.time = row.wedding_time ? String(row.wedding_time).slice(0,5) : "";
+      loaded.main_venue_label = row.main_venue_label || loaded.main_venue_label;
+
+      loaded.ceremony.name = row.ceremony_name || "";
+      loaded.ceremony.address = row.ceremony_address || "";
+      loaded.ceremony.map_url = row.ceremony_map_url || "";
+      loaded.ceremony.notes = row.ceremony_notes || "";
+      loaded.ceremony.photo_url = row.ceremony_photo_url || "";
+
+      loaded.reception.name = row.reception_name || "";
+      loaded.reception.address = row.reception_address || "";
+      loaded.reception.map_url = row.reception_map_url || "";
+      loaded.reception.notes = row.reception_notes || "";
+      loaded.reception.photo_url = row.reception_photo_url || "";
+
+      loaded.dress_code.title = row.dress_title || loaded.dress_code.title;
+      loaded.dress_code.description = row.dress_description || loaded.dress_code.description;
+      loaded.dress_code.colors = [
+        row.dress_color1 || loaded.dress_code.colors[0],
+        row.dress_color2 || loaded.dress_code.colors[1],
+        row.dress_color3 || loaded.dress_code.colors[2]
+      ];
+
+      loaded.sponsors.principal = row.principal_sponsors || "";
+      loaded.sponsors.secondary = row.secondary_sponsors || "";
+      loaded.sponsors.parents_bride = row.parents_bride || "";
+      loaded.sponsors.parents_groom = row.parents_groom || "";
+      loaded.sponsors.maid_of_honor_block = row.maid_of_honor_block || "";
+      loaded.sponsors.best_man_block = row.best_man_block || "";
+      loaded.sponsors.flower_girls = row.flower_girls || "";
+      loaded.sponsors.ring_bearer = row.ring_bearer || "";
+      loaded.sponsors.other_roles = row.other_roles || "";
+
+      loaded.story.our_story = row.our_story || "";
+      loaded.story.proposal_story = row.proposal_story || "";
+
+      loaded.verse.reference = row.verse_reference || "";
+      loaded.verse.text = row.verse_text || "";
+
+      loaded.media.photos = Array.isArray(row.media_photos) ? row.media_photos : [];
+      loaded.media.video_url = row.media_video_url || "";
+
+      loaded.rsvp_settings.deadline = row.rsvp_deadline || "";
+      loaded.rsvp_settings.note = row.rsvp_note || "";
+
+      loaded.theme_photos = row.theme_photos || {};
+
+      data = loaded;
+      saveLocal();
+
+      addRecentInvite({ id: row.id, bride: row.bride, groom: row.groom });
+      await fetchAttendeeCount();
+
+      isDirty = false;
+      showAutoSavePill("saved");
+
+      return true;
+    }
+
+    async function handleLoadById(idToLoad) {
+      if (!supabaseClient) return;
+      const ok = await loadInviteFromSupabaseById(idToLoad);
+      if (!ok) {
+        Swal.fire({ icon: "error", title: "Invite not found", text: "Please check the ID and try again.", background:"#fff", color:"#0f172a" });
+        return;
+      }
+
+      refreshThemeSection(false);
+      renderForm();
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("id", currentInviteId);
+      window.history.replaceState({}, "", url.toString());
+
+      Swal.fire({ icon: "success", title: "Invite loaded!", text: `You are editing invite: ${currentInviteId}`, background:"#fff", color:"#0f172a" });
+    }
+
+    async function handleLoadInviteClick() {
+      const input = document.getElementById("invite-id-input");
+      const idToLoad = input?.value.trim();
+      if (!idToLoad) {
+        Swal.fire({ icon: "info", title: "Enter an Invite ID first.", background:"#fff", color:"#0f172a" });
+        return;
+      }
+      await handleLoadById(idToLoad);
+    }
+
+    /* =====================
+       INIT
+       ===================== */
+    document.addEventListener("DOMContentLoaded", async () => {
+
+      const searchInput = document.getElementById("theme-search-input");
+      const clearBtn = document.getElementById("theme-search-clear");
+
+      if (searchInput) {
+        searchInput.addEventListener("input", () => {
+          themeSearchTerm = searchInput.value;
+          refreshThemeSection(false);
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+          themeSearchTerm = "";
+          if (searchInput) searchInput.value = "";
+          refreshThemeSection(false);
+        });
+      }
+
+      if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      loadLocal();
+      refreshThemeSection(false);
+
+      const params = new URLSearchParams(window.location.search);
+      const inviteIdFromUrl = params.get("id");
+
+      if (inviteIdFromUrl && supabaseClient) {
+        await loadInviteFromSupabaseById(inviteIdFromUrl);
+        refreshThemeSection(false);
+      } else if (!currentInviteId) {
+        await autoCreateNewInviteSilent();
+      }
+
+      renderForm();
+      attachFieldListeners();
+
+      startAutoSaveLoop();
+      showAutoSavePill("saved");
+
+      document.getElementById("btn-load-invite")?.addEventListener("click", handleLoadInviteClick);
+      document.getElementById("btn-recent-invite")?.addEventListener("click", showRecentModal);
+      document.getElementById("invite-id-input")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleLoadInviteClick();
+      });
+
+      document.getElementById("btn-share-link")?.addEventListener("click", handleShareClick);
+      document.getElementById("btn-guest-view")?.addEventListener("click", handleGuestViewClick);
+      document.getElementById("btn-create-new")?.addEventListener("click", handleCreateNew);
+
+      document.getElementById("attendees-row")?.addEventListener("click", showAttendeesModal);
+
+      // ✅ go to separate theme selection page
+      document.getElementById("btn-see-more-themes")?.addEventListener("click", () => {
+        const url = new URL(window.location.href);
+        url.pathname = url.pathname.replace(/[^/]+$/, "themes-select.html");
+        window.location.href = url.toString();
+      });
+    });
+
+    // ✅ When coming back from themes-select.html, refresh from localStorage
+    window.addEventListener("pageshow", (event) => {
+      const navEntries = performance.getEntriesByType("navigation") || [];
+      const navType = navEntries[0]?.type;
+
+      if (event.persisted || navType === "back_forward") {
+        loadLocal();
+        refreshThemeSection(true);
+        renderForm();
+      }
+    });
+  </script>
+</body>
+</html>

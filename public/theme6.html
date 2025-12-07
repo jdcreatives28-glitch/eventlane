@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wedding Invitation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- SweetAlert2 (for RSVP alerts) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Supabase JS v2 (FIXED src) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #021b1a;
+      --bg-soft: #042d2a;
+      --paper: #f4efe3;
+      --paper-soft: #f9f4e8;
+      --ink: #10201f;
+      --ink-soft: #324341;
+      --muted: #6f827f;
+      --emerald: #145e55;
+      --emerald-soft: rgba(20, 94, 85, 0.12);
+      --emerald-deep: #064037;
+      --gold: #c9a76f;
+      --gold-soft: rgba(201, 167, 111, 0.26);
+      --radius-outer: 32px;
+      --radius-inner: 28px;
+      --radius-pill: 999px;
+      --transition-fast: 160ms ease-out;
+      --transition-med: 260ms ease-out;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, #063f3a 0, #021b1a 40%, #010f0e 100%);
+      color: var(--ink);
+      scroll-behavior: smooth;
+    }
+
+    body { min-height: 100vh; }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 12px 24px;
+    }
+
+    @media (min-width: 768px) {
+      .page { padding: 32px 0; }
+    }
+
+    /* Main emerald shell */
+    .invite-shell {
+      width: 100%;
+      max-width: 480px;
+      background: radial-gradient(circle at top, #fdf7eb 0, #f4efe3 42%, #eee6d9 100%);
+      border-radius: var(--radius-outer);
+      position: relative;
+      box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(0, 0, 0, 0.65);
+      overflow: hidden;
+    }
+
+    .invite-shell::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: var(--radius-inner);
+      border: 1px solid var(--gold-soft);
+      box-shadow:
+        0 0 0 1px rgba(1, 54, 46, 0.18),
+        0 0 0 6px rgba(1, 54, 46, 0.22);
+      pointer-events: none;
+    }
+
+    .invite-inner {
+      position: relative;
+      padding: 18px 18px 18px;
+      border-radius: var(--radius-inner);
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .invite-inner { padding: 20px 22px 22px; }
+    }
+
+    /* Each screen-height section */
+    .screen-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 12px;
+      position: relative;
+    }
+
+    @media (min-width: 768px) {
+      .screen-section {
+        min-height: 90vh;
+        padding: 40px 24px;
+      }
+    }
+
+    .screen-section + .screen-section {
+      border-top: 1px solid rgba(6, 64, 55, 0.16);
+    }
+
+    /* Decorative corners */
+    .corner-orbit {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 167, 111, 0.7);
+      opacity: 0.9;
+    }
+    .corner-orbit.top-left { top: -20px; left: -20px; }
+    .corner-orbit.top-right { top: -20px; right: -20px; }
+    .corner-orbit.bottom-left { bottom: -20px; left: -20px; }
+    .corner-orbit.bottom-right { bottom: -20px; right: -20px; }
+
+    .corner-orbit::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: inherit;
+      border: 1px solid rgba(6, 64, 55, 0.4);
+    }
+
+    /* Ornaments */
+    .ornament-line {
+      width: 160px;
+      height: 1px;
+      margin: 10px auto;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+      position: relative;
+    }
+    .ornament-line::before,
+    .ornament-line::after {
+      content: "✶";
+      position: absolute;
+      top: -10px;
+      font-size: 9px;
+      color: var(--emerald-deep);
+    }
+    .ornament-line::before { left: 18px; }
+    .ornament-line::after { right: 18px; }
+
+    .ornament-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 18px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(6, 64, 55, 0.5);
+      background: linear-gradient(
+        135deg,
+        rgba(20, 94, 85, 0.06),
+        rgba(201, 167, 111, 0.16)
+      );
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--emerald-deep);
+    }
+
+    /* Hero section */
+    .hero-eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.35em;
+      color: var(--muted);
+    }
+
+    .hero-names {
+      margin-top: 12px;
+      font-family: "Playfair Display", "Times New Roman", serif;
+      font-weight: 500;
+      font-size: clamp(28px, 6vw, 36px);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--emerald-deep);
+    }
+    .hero-names span.amp {
+      font-style: italic;
+      font-size: 0.86em;
+      letter-spacing: 0.16em;
+    }
+
+    .hero-meta {
+      margin-top: 10px;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      max-width: 320px;
+      line-height: 1.7;
+    }
+    .hero-subtitle em {
+      font-family: "Playfair Display", serif;
+      font-style: italic;
+      color: var(--emerald-deep);
+    }
+
+    .hero-verse-ref {
+      margin-top: 6px;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Round hero photo */
+    .hero-photo-circle {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      margin: 18px auto 10px;
+      padding: 8px;
+      background:
+        radial-gradient(circle at 30% 0, #fdf7eb 0, #f4efe3 35%, #ddd1c1 100%);
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(6, 64, 55, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-photo-inner {
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      background: #d5cbbd center/cover no-repeat;
+      filter: sepia(0.2) contrast(1.02);
+      transition: transform var(--transition-med), filter var(--transition-med);
+    }
+    .hero-photo-inner.has-image { background-size: cover; }
+    .hero-photo-circle:hover .hero-photo-inner {
+      transform: scale(1.02);
+      filter: sepia(0.12) contrast(1.05);
+    }
+
+    .hero-tagline {
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .hero-cta {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hero-btn {
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      border: 1px solid rgba(6, 64, 55, 0.6);
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-deep));
+      color: #f8f4eb;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 14px 30px rgba(1, 30, 29, 0.45);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+    }
+    .hero-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 18px 40px rgba(1, 30, 29, 0.6);
+    }
+
+    .hero-scroll-hint {
+      font-size: 10px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .hero-scroll-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(6, 64, 55, 0.8);
+      background: rgba(20, 94, 85, 0.15);
+    }
+
+    /* The Day section */
+    .section-title {
+      font-family: "Playfair Display", serif;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--emerald-deep);
+    }
+    .section-subtitle {
+      margin-top: 6px;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #details-date-time {
+      margin-top: 14px;
+      font-family: "Playfair Display", serif;
+      font-size: 15px;
+      color: var(--ink-soft);
+      line-height: 1.7;
+      max-width: 320px;
+      white-space: pre-line;
+    }
+
+    .pill-row {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+    }
+    .pill {
+      border-radius: var(--radius-pill);
+      padding: 4px 10px;
+      border: 1px solid rgba(6, 64, 55, 0.45);
+      background: var(--emerald-soft);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--emerald-deep);
+    }
+
+    .venue-list {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+      width: 100%;
+    }
+    .venue-item {
+      padding: 8px 10px;
+      border-radius: 18px;
+      background: rgba(244, 239, 227, 0.9);
+      border: 1px solid rgba(6, 64, 55, 0.18);
+    }
+    .venue-label {
+      font-size: 10px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .venue-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--emerald-deep);
+    }
+    .venue-address {
+      margin-top: 2px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .venue-link {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--emerald-deep);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .venue-link span {
+      border-bottom: 1px dotted rgba(6, 64, 55, 0.7);
+    }
+
+    .section-text {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      max-width: 340px;
+      line-height: 1.7;
+      white-space: pre-line;
+    }
+    .section-text.small { font-size: 12px; }
+
+    .entourage-group-title {
+      margin-top: 14px;
+      font-size: 11px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .entourage-list {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      white-space: pre-line;
+      line-height: 1.7;
+    }
+
+    .dress-colors {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .color-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 2px solid #fdf7eb;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Gallery */
+    .gallery-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      width: 100%;
+    }
+    @media (max-width: 480px) {
+      .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .gallery-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 4 / 5;
+      background: #d2c7b7;
+      cursor: pointer;
+      transition: transform var(--transition-fast), filter 200ms ease-out;
+    }
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: sepia(0.2);
+    }
+    .gallery-item:hover {
+      transform: translateY(-2px);
+      filter: sepia(0.1) contrast(1.03);
+    }
+
+    .gallery-more {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 320px;
+      line-height: 1.6;
+    }
+
+    /* RSVP */
+    .rsvp-form {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .field-label {
+      font-size: 11px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .field-label span { color: var(--emerald-deep); }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(6, 64, 55, 0.5);
+      padding: 8px 10px;
+      font-size: 13px;
+      background: rgba(249, 244, 232, 0.96);
+      color: var(--ink);
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+      resize: vertical;
+      text-align: center;
+    }
+
+    textarea {
+      min-height: 80px;
+      max-height: 160px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 1px rgba(6, 64, 55, 0.35);
+      background: #fdf7eb;
+    }
+
+    .btn-submit {
+      margin-top: 6px;
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      border: none;
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-deep));
+      color: #fdf7eb;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+    }
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.8);
+    }
+
+    .rsvp-list {
+      margin-top: 12px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(6, 64, 55, 0.4);
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(6, 64, 55, 0.8) transparent;
+      text-align: center;
+    }
+
+    .rsvp-item {
+      padding: 6px 0;
+      border-bottom: 1px dotted rgba(6, 64, 55, 0.3);
+      font-size: 13px;
+    }
+    .rsvp-item:last-child { border-bottom: none; }
+
+    .rsvp-name-row {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .rsvp-name {
+      font-weight: 600;
+      color: var(--emerald-deep);
+    }
+    .rsvp-status {
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .rsvp-meta {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .rsvp-message {
+      margin-top: 3px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      white-space: pre-line;
+    }
+
+    .footer {
+      margin-top: 12px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+    }
+
+    /* Loading / error */
+    .center-note {
+      text-align: center;
+      font-size: 14px;
+      color: #cbd5d4;
+      padding: 24px 16px;
+    }
+
+    .loading-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--gold);
+      margin-inline: 2px;
+      animation: pulse 900ms ease-in-out infinite;
+    }
+    .loading-dot:nth-child(2) { animation-delay: 120ms; }
+    .loading-dot:nth-child(3) { animation-delay: 240ms; }
+
+    @keyframes pulse {
+      0%, 100% { transform: translateY(0); opacity: 0.2; }
+      50% { transform: translateY(-3px); opacity: 1; }
+    }
+
+    /* Scroll animations */
+    .section-animate {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 480ms ease-out, transform 520ms ease-out;
+      will-change: opacity, transform;
+    }
+    .section-animate.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Lightbox for gallery */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: none;
+    }
+    .lightbox-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 15, 14, 0.94);
+      backdrop-filter: blur(5px);
+    }
+    .lightbox-inner {
+      position: absolute;
+      inset: 40px 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .lightbox-figure {
+      margin: 0;
+      max-width: min(960px, 100%);
+      max-height: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      pointer-events: auto;
+      background: #111;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+    }
+    .lightbox-figure img {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      border: none;
+      background: rgba(2, 15, 14, 0.98);
+      color: #fdf7eb;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      font-size: 20px;
+      cursor: pointer;
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(2, 15, 14, 0.98);
+      color: #fdf7eb;
+      font-size: 18px;
+      cursor: pointer;
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox-arrow-left { left: 18px; }
+    .lightbox-arrow-right { right: 18px; }
+
+    @media (max-width: 600px) {
+      .lightbox-inner { inset: 70px 8px 70px; }
+      .lightbox-arrow { width: 32px; height: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div id="loading-state" class="center-note">
+      Opening your invitation
+      <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+    </div>
+    <div id="error-state" class="center-note" style="display:none;"></div>
+
+    <div class="invite-shell section-animate" id="invite-shell" style="display:none;">
+      <div class="invite-inner">
+        <!-- Decorative corners -->
+        <div class="corner-orbit top-left" aria-hidden="true"></div>
+        <div class="corner-orbit top-right" aria-hidden="true"></div>
+        <div class="corner-orbit bottom-left" aria-hidden="true"></div>
+        <div class="corner-orbit bottom-right" aria-hidden="true"></div>
+
+        <!-- HERO SECTION -->
+        <section class="screen-section section-animate" id="section-hero">
+          <div class="hero-eyebrow">Wedding Invitation</div>
+          <div class="ornament-line"></div>
+          <div class="hero-names" id="hero-names">Loading Names…</div>
+
+          <div class="hero-meta">
+            <div id="hero-date-text">Date to be announced</div>
+            <div id="hero-location-pill" class="ornament-pill" style="display:none;">
+              <span id="hero-location-text"></span>
+            </div>
+          </div>
+
+          <p class="hero-subtitle" id="hero-subtitle">
+            We’re so excited to celebrate this day with you. Kindly wait while we open your invitation.
+          </p>
+
+          <div class="hero-verse-ref" id="hero-verse-ref" style="display:none;"></div>
+
+          <div class="hero-photo-circle">
+            <div class="hero-photo-inner" id="hero-photo-inner"></div>
+          </div>
+
+          <div class="hero-tagline" id="hero-tag">
+            Save the Date
+          </div>
+
+          <div class="hero-cta">
+            <button class="hero-btn" onclick="scrollToSection('section-day')">
+              View Details
+            </button>
+            <div class="hero-scroll-hint">
+              <span class="hero-scroll-dot"></span>
+              Scroll to continue
+              <span class="hero-scroll-dot"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- THE DAY SECTION -->
+        <section class="screen-section section-animate" id="section-day">
+          <div class="ornament-pill">The Day</div>
+          <div class="section-title" style="margin-top:12px;">Order of the Day</div>
+          <div class="section-subtitle" id="details-subtitle">Ceremony &amp; Reception</div>
+
+          <div id="details-date-time"></div>
+
+          <div class="pill-row" id="pill-row-date"></div>
+
+          <div class="venue-list" id="venue-list"></div>
+
+          <div class="section-title" id="schedule-title" style="margin-top:18px; display:none;">
+            Schedule
+          </div>
+          <div class="section-text small" id="schedule-text" style="display:none;"></div>
+        </section>
+
+        <!-- PEOPLE & ATTIRE SECTION -->
+        <section class="screen-section section-animate" id="section-people">
+          <div class="ornament-pill">In Gracious Company</div>
+          <div class="section-title" style="margin-top:12px;">Family &amp; Friends</div>
+          <div class="section-text">
+            We are deeply grateful to be surrounded by the people who have shaped our story.
+          </div>
+
+          <div class="section-title" style="margin-top:16px;">Parents of the Couple</div>
+          <div class="section-text small" id="parents-text">—</div>
+
+          <div class="section-text small" id="officiant-text" style="margin-top:6px;"></div>
+
+          <div class="entourage-group-title">Principal Sponsors</div>
+          <div class="entourage-list" id="principal-list">—</div>
+
+          <div class="entourage-group-title">Secondary Sponsors</div>
+          <div class="entourage-list" id="secondary-list">—</div>
+
+          <div class="entourage-group-title">Bridesmaids</div>
+          <div class="entourage-list" id="bridesmaids-list">—</div>
+
+          <div class="entourage-group-title">Groomsmen</div>
+          <div class="entourage-list" id="groomsmen-list">—</div>
+
+          <div class="section-title" style="margin-top:18px;">Attire</div>
+          <div class="section-text" id="dress-desc">
+            We’ll be happy to see you in your most comfortable semi-formal outfit.
+          </div>
+          <div class="dress-colors" id="dress-colors"></div>
+        </section>
+
+        <!-- GALLERY SECTION -->
+        <section class="screen-section section-animate" id="section-gallery">
+          <div class="ornament-pill">Keepsakes</div>
+          <div class="section-title" style="margin-top:12px;">Photo Album</div>
+          <div class="section-text">
+            A few moments from our journey so far. Tap to see each memory in full.
+          </div>
+
+          <div class="gallery-grid" id="gallery-grid"></div>
+          <div class="gallery-more" id="gallery-more" style="display:none;">
+            Swipe or tap through the photos to view them in full size and relive our story.
+          </div>
+        </section>
+
+        <!-- RSVP SECTION -->
+        <section class="screen-section section-animate" id="section-rsvp">
+          <div class="ornament-pill">RSVP</div>
+          <div class="section-title" style="margin-top:12px;">Reply With Love</div>
+          <div class="section-text">
+            Your presence would mean so much to us. Kindly let us know if you can join.
+          </div>
+
+          <div class="section-text small" id="rsvp-extra" style="margin-top:6px;"></div>
+
+          <form class="rsvp-form" id="rsvp-form">
+            <div>
+              <div class="field-label">Your Name <span>*</span></div>
+              <input type="text" id="rsvp-name" required placeholder="Kindly type your full name" />
+            </div>
+
+            <div>
+              <div class="field-label">Will You Be Able to Join Us?</div>
+              <select id="rsvp-status">
+                <option value="going">Happily attending</option>
+                <option value="maybe">Still confirming</option>
+                <option value="not_going">Sadly can’t make it</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="field-label">Number of Guests (Including You)</div>
+              <input type="number" id="rsvp-persons" min="1" value="1" />
+            </div>
+
+            <div>
+              <div class="field-label">Message</div>
+              <textarea id="rsvp-message" placeholder="You may leave a short note or greeting here."></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">
+              Send RSVP
+            </button>
+          </form>
+
+          <div class="section-text small" id="notes-text" style="margin-top:12px;"></div>
+          <div class="section-text small" id="hashtag-text" style="margin-top:6px;"></div>
+
+          <div class="rsvp-list" id="rsvp-list"></div>
+
+          <div class="footer">
+            <span id="footer-label">Thank you for being part of this day.</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-inner">
+      <button class="lightbox-close" id="lightbox-close" type="button">&times;</button>
+      <button class="lightbox-arrow lightbox-arrow-left" id="lightbox-prev" type="button">&#10094;</button>
+      <figure class="lightbox-figure">
+        <img id="lightbox-image" src="" alt="Photo" />
+      </figure>
+      <button class="lightbox-arrow lightbox-arrow-right" id="lightbox-next" type="button">&#10095;</button>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Supabase setup
+    // -----------------------------
+    const SUPABASE_URL = "https://minftvflekxdoiubeujy.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pbmZ0dmZsZWt4ZG9pdWJldWp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MTc4NjgsImV4cCI6MjA2NjA5Mzg2OH0.Aj0-ts6WzffJRrXDkTMDKjQT4t6pW_-jSUft4md0KJM";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const inviteId = new URLSearchParams(window.location.search).get("id");
+
+    const loadingStateEl = document.getElementById("loading-state");
+    const errorStateEl = document.getElementById("error-state");
+    const inviteShellEl = document.getElementById("invite-shell");
+
+    // Hero elements
+    const heroNamesEl = document.getElementById("hero-names");
+    const heroSubtitleEl = document.getElementById("hero-subtitle");
+    const heroDateTextEl = document.getElementById("hero-date-text");
+    const heroLocationTextEl = document.getElementById("hero-location-text");
+    const heroLocationPillEl = document.getElementById("hero-location-pill");
+    const heroPhotoInnerEl = document.getElementById("hero-photo-inner");
+    const heroTagEl = document.getElementById("hero-tag");
+    const heroVerseRefEl = document.getElementById("hero-verse-ref");
+    const footerLabelEl = document.getElementById("footer-label");
+
+    // Details
+    const detailsDateTimeEl = document.getElementById("details-date-time");
+    const pillRowDateEl = document.getElementById("pill-row-date");
+    const venueListEl = document.getElementById("venue-list");
+    const scheduleTitleEl = document.getElementById("schedule-title");
+    const scheduleTextEl = document.getElementById("schedule-text");
+
+    // Entourage & family
+    const principalListEl = document.getElementById("principal-list");
+    const secondaryListEl = document.getElementById("secondary-list");
+    const bridesmaidsListEl = document.getElementById("bridesmaids-list");
+    const groomsmenListEl = document.getElementById("groomsmen-list");
+    const parentsTextEl = document.getElementById("parents-text");
+    const officiantTextEl = document.getElementById("officiant-text");
+
+    // Dress
+    const dressDescEl = document.getElementById("dress-desc");
+    const dressColorsEl = document.getElementById("dress-colors");
+
+    // Gallery
+    const galleryGridEl = document.getElementById("gallery-grid");
+    const galleryMoreEl = document.getElementById("gallery-more");
+
+    // RSVP
+    const rsvpFormEl = document.getElementById("rsvp-form");
+    const rsvpNameEl = document.getElementById("rsvp-name");
+    const rsvpStatusEl = document.getElementById("rsvp-status");
+    const rsvpPersonsEl = document.getElementById("rsvp-persons");
+    const rsvpMessageEl = document.getElementById("rsvp-message");
+    const rsvpListEl = document.getElementById("rsvp-list");
+    const rsvpExtraEl = document.getElementById("rsvp-extra");
+    const notesTextEl = document.getElementById("notes-text");
+    const hashtagTextEl = document.getElementById("hashtag-text");
+
+    // Lightbox
+    const lightboxEl = document.getElementById("lightbox");
+    const lightboxBackdropEl = document.getElementById("lightbox-backdrop");
+    const lightboxImageEl = document.getElementById("lightbox-image");
+    const lightboxCloseEl = document.getElementById("lightbox-close");
+    const lightboxPrevEl = document.getElementById("lightbox-prev");
+    const lightboxNextEl = document.getElementById("lightbox-next");
+
+    let currentInviteData = null;
+    let galleryPhotos = [];
+    let currentPhotoIndex = 0;
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        loadingStateEl.style.display = "block";
+        errorStateEl.style.display = "none";
+        inviteShellEl.style.display = "none";
+      } else {
+        loadingStateEl.style.display = "none";
+      }
+    }
+
+    function showError(message) {
+      errorStateEl.textContent = message;
+      errorStateEl.style.display = "block";
+      inviteShellEl.style.display = "none";
+      loadingStateEl.style.display = "none";
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const offset = window.scrollY + rect.top - 80;
+      window.scrollTo({ top: offset, behavior: "smooth" });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr + (dateStr.length === 10 ? "T00:00:00" : ""));
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+      }
+      return dateStr;
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return "";
+      const match = /^(\d{1,2}):(\d{2})/.exec(timeStr);
+      if (!match) return timeStr;
+      let [, h, m] = match;
+      let hour = parseInt(h, 10);
+      const suffix = hour >= 12 ? "PM" : "AM";
+      if (hour === 0) hour = 12;
+      else if (hour > 12) hour -= 12;
+      return `${hour}:${m} ${suffix}`;
+    }
+
+    function prettyRSVPStatus(status) {
+      switch (status) {
+        case "going": return "Will attend";
+        case "maybe": return "Still confirming";
+        case "not_going": return "Cannot attend";
+        default: return "Responded";
+      }
+    }
+
+    function formatTimeAgo(ts) {
+      if (!ts) return "";
+      const t = new Date(ts).getTime();
+      if (!t) return "";
+      const diff = Date.now() - t;
+      const m = 60000;
+      const h = 60 * m;
+      const d = 24 * h;
+      if (diff < m) return "Just now";
+      if (diff < h) {
+        const mins = Math.floor(diff / m);
+        return `${mins} min${mins > 1 ? "s" : ""} ago`;
+      }
+      if (diff < d) {
+        const hrs = Math.floor(diff / h);
+        return `${hrs} hour${hrs > 1 ? "s" : ""} ago`;
+      }
+      const days = Math.floor(diff / d);
+      if (days === 1) return "Yesterday";
+      return `${days} days ago`;
+    }
+
+    // Safe getter for nested fields, using dot paths, with fallback
+    function getField(obj, path, fallback = "") {
+      if (!obj || typeof obj !== "object") return fallback;
+      const parts = path.split(".");
+      let val = obj;
+      for (const key of parts) {
+        if (val && typeof val === "object" && key in val && val[key] != null) {
+          val = val[key];
+        } else {
+          val = undefined;
+          break;
+        }
+      }
+      if (val === undefined || val === null || val === "") return fallback;
+      return val;
+    }
+
+    function renderInvite(data) {
+      const d = data || {};
+      currentInviteData = d;
+
+      // Couple names
+      const bride =
+        getField(d, "bride") ||
+        getField(d, "couple.bride") ||
+        d.bride ||
+        "";
+      const groom =
+        getField(d, "groom") ||
+        getField(d, "couple.groom") ||
+        d.groom ||
+        "";
+      const coupleNames =
+        (bride && groom && `${bride} & ${groom}`) ||
+        getField(d, "coupleNames") ||
+        getField(d, "couple.names") ||
+        "Our Wedding";
+
+      heroNamesEl.textContent = coupleNames;
+      document.title = coupleNames || "Wedding Invitation";
+
+      // Subtitle / tagline
+      const subtitle =
+        getField(d, "tagline") ||
+        getField(d, "story.subtitle") ||
+        getField(d, "verse.text") ||
+        d.subtitle ||
+        d.verse ||
+        "";
+      heroSubtitleEl.innerHTML = subtitle
+        ? `<em>${subtitle}</em>`
+        : "We are joyfully inviting you to celebrate this special day with us.";
+
+      // Verse reference
+      const verseRef =
+        getField(d, "verse.reference") ||
+        getField(d, "verse_ref") ||
+        getField(d, "verseRef") ||
+        "";
+      if (verseRef) {
+        heroVerseRefEl.textContent = verseRef;
+        heroVerseRefEl.style.display = "block";
+      } else {
+        heroVerseRefEl.style.display = "none";
+      }
+
+      // Date & time
+      const rawDate =
+        getField(d, "date") ||
+        getField(d, "event.date") ||
+        d.date ||
+        getField(d, "wedding_date") ||
+        d.wedding_date;
+      const rawTime =
+        getField(d, "time") ||
+        getField(d, "event.time") ||
+        d.time ||
+        getField(d, "wedding_time") ||
+        d.wedding_time;
+
+      const prettyDate = formatDate(rawDate);
+      const prettyTime = formatTime(rawTime);
+
+      heroDateTextEl.textContent = prettyDate
+        ? (prettyTime ? `${prettyDate} • ${prettyTime}` : prettyDate)
+        : "Date to be announced";
+
+      // Main venue
+      const mainVenue =
+        getField(d, "main_venue_label") ||
+        getField(d, "ceremony.name") ||
+        d.mainVenue ||
+        d.ceremonyName ||
+        "";
+      if (mainVenue) {
+        heroLocationTextEl.textContent = mainVenue;
+        heroLocationPillEl.style.display = "inline-flex";
+      } else {
+        heroLocationPillEl.style.display = "none";
+      }
+
+      // Hero image (circle)
+      const photosRaw =
+        getField(d, "media.photos") ||
+        getField(d, "media_photos") ||
+        d.photos ||
+        d.media_photos ||
+        [];
+      const photos = Array.isArray(photosRaw)
+        ? photosRaw.filter(Boolean)
+        : (typeof photosRaw === "string"
+            ? photosRaw.split(",").map(s => s.trim()).filter(Boolean)
+            : []);
+
+      const heroImage =
+        getField(d, "heroImage") ||
+        getField(d, "media.hero") ||
+        getField(d, "couple.hero_photo") ||
+        (photos.length ? photos[0] : "");
+
+      if (heroImage) {
+        heroPhotoInnerEl.style.backgroundImage = `url("${heroImage}")`;
+        heroPhotoInnerEl.classList.add("has-image");
+      } else {
+        heroPhotoInnerEl.classList.remove("has-image");
+      }
+
+      heroTagEl.textContent = prettyDate || "Save the Date";
+      footerLabelEl.textContent = coupleNames
+        ? `With love, ${coupleNames}`
+        : "Thank you for being with us.";
+
+      // Day details
+      const detailsLines = [];
+      if (prettyDate) detailsLines.push(prettyDate);
+      if (prettyTime) detailsLines.push(prettyTime);
+      const dayLabel =
+        getField(d, "day_label") ||
+        getField(d, "event.title") ||
+        "";
+      if (dayLabel) detailsLines.push(dayLabel);
+      detailsDateTimeEl.textContent = detailsLines.join("\n");
+
+      pillRowDateEl.innerHTML = "";
+      if (prettyDate) {
+        const pill = document.createElement("div");
+        pill.className = "pill";
+        pill.textContent = "Formal Celebration";
+        pillRowDateEl.appendChild(pill);
+      }
+
+      // Venues
+      venueListEl.innerHTML = "";
+
+      const ceremony = {
+        label: "Ceremony",
+        name:
+          getField(d, "ceremony.name") ||
+          getField(d, "ceremony_name") ||
+          d.ceremonyName,
+        address:
+          getField(d, "ceremony.address") ||
+          getField(d, "ceremony_address") ||
+          d.ceremonyAddress,
+        map:
+          getField(d, "ceremony.map_url") ||
+          getField(d, "ceremony_map_url") ||
+          getField(d, "ceremony.map") ||
+          d.ceremonyMap
+      };
+
+      const reception = {
+        label: "Reception",
+        name:
+          getField(d, "reception.name") ||
+          getField(d, "reception_name") ||
+          d.receptionName,
+        address:
+          getField(d, "reception.address") ||
+          getField(d, "reception_address") ||
+          d.receptionAddress,
+        map:
+          getField(d, "reception.map_url") ||
+          getField(d, "reception_map_url") ||
+          getField(d, "reception.map") ||
+          d.receptionMap
+      };
+
+      [ceremony, reception].forEach((v) => {
+        if (!v.name && !v.address) return;
+
+        const item = document.createElement("div");
+        item.className = "venue-item";
+
+        const label = document.createElement("div");
+        label.className = "venue-label";
+        label.textContent = v.label;
+        item.appendChild(label);
+
+        if (v.name) {
+          const nameEl = document.createElement("div");
+          nameEl.className = "venue-name";
+          nameEl.textContent = v.name;
+          item.appendChild(nameEl);
+        }
+
+        if (v.address) {
+          const addrEl = document.createElement("div");
+          addrEl.className = "venue-address";
+          addrEl.textContent = v.address;
+          item.appendChild(addrEl);
+        }
+
+        if (v.map) {
+          const link = document.createElement("a");
+          link.href = v.map;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.className = "venue-link";
+          link.innerHTML = `<span>Open in Maps</span>`;
+          item.appendChild(link);
+        }
+
+        venueListEl.appendChild(item);
+      });
+
+      // Schedule / program
+      const scheduleText =
+        getField(d, "schedule") ||
+        getField(d, "program") ||
+        getField(d, "itinerary") ||
+        "";
+      if (scheduleText) {
+        scheduleTitleEl.style.display = "block";
+        scheduleTextEl.style.display = "block";
+        scheduleTextEl.textContent = scheduleText;
+      } else {
+        scheduleTitleEl.style.display = "none";
+        scheduleTextEl.style.display = "none";
+      }
+
+      // Parents
+      const parentsBride =
+        getField(d, "parents.bride") ||
+        getField(d, "parents_bride") ||
+        "";
+      const parentsGroom =
+        getField(d, "parents.groom") ||
+        getField(d, "parents_groom") ||
+        "";
+      let parentsLines = [];
+      if (parentsBride) parentsLines.push(`Parents of the Bride: ${parentsBride}`);
+      if (parentsGroom) parentsLines.push(`Parents of the Groom: ${parentsGroom}`);
+      parentsTextEl.textContent = parentsLines.length ? parentsLines.join("\n") : "To follow";
+
+      // Officiant
+      const officiant =
+        getField(d, "ceremony.officiant") ||
+        getField(d, "officiant") ||
+        "";
+      officiantTextEl.textContent = officiant ? `Officiated by: ${officiant}` : "";
+
+      // Entourage & sponsors
+      const principal =
+        getField(d, "sponsors.principal") ||
+        getField(d, "principal_sponsors") ||
+        d.principal ||
+        "";
+      const secondary =
+        getField(d, "sponsors.secondary") ||
+        getField(d, "secondary_sponsors") ||
+        d.secondary ||
+        "";
+      const bridesmaids =
+        getField(d, "entourage.bridesmaids") ||
+        d.bridesmaids ||
+        "";
+      const groomsmen =
+        getField(d, "entourage.groomsmen") ||
+        d.groomsmen ||
+        "";
+
+      principalListEl.textContent = principal || "To follow";
+      secondaryListEl.textContent = secondary || "To follow";
+      bridesmaidsListEl.textContent = bridesmaids || "To follow";
+      groomsmenListEl.textContent = groomsmen || "To follow";
+
+      // Dress code
+      const dressDesc =
+        getField(d, "dress_code.description") ||
+        getField(d, "dress_description") ||
+        d.dressDesc ||
+        d.dress_description ||
+        "";
+      if (dressDesc) dressDescEl.textContent = dressDesc;
+
+      dressColorsEl.innerHTML = "";
+      let dressColors =
+        getField(d, "dress_code.colors") ||
+        d.dressColors ||
+        [getField(d, "dress_color1"), getField(d, "dress_color2"), getField(d, "dress_color3")].filter(Boolean);
+
+      if (typeof dressColors === "string") {
+        dressColors = dressColors.split(",").map((c) => c.trim()).filter(Boolean);
+      }
+      if (Array.isArray(dressColors) && dressColors.length > 0) {
+        dressColors.forEach((c) => {
+          if (!c) return;
+          const dot = document.createElement("div");
+          dot.className = "color-dot";
+          dot.style.background = c;
+          dressColorsEl.appendChild(dot);
+        });
+      }
+
+      // Gallery
+      galleryPhotos = photos.slice();
+
+      const ceremonyPhoto =
+        getField(d, "ceremony.photo_url") ||
+        getField(d, "ceremony_photo_url") ||
+        "";
+      const receptionPhoto =
+        getField(d, "reception.photo_url") ||
+        getField(d, "reception_photo_url") ||
+        "";
+
+      [ceremonyPhoto, receptionPhoto].forEach((url) => {
+        if (url && !galleryPhotos.includes(url)) galleryPhotos.push(url);
+      });
+
+      galleryGridEl.innerHTML = "";
+
+      if (galleryPhotos.length) {
+        const maxToShow = Math.min(galleryPhotos.length, 6);
+        for (let i = 0; i < maxToShow; i++) {
+          const url = galleryPhotos[i];
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = "Wedding photo";
+          img.loading = "lazy";
+          item.appendChild(img);
+
+          item.addEventListener("click", () => openLightbox(i));
+          galleryGridEl.appendChild(item);
+        }
+        galleryMoreEl.style.display = "block";
+      } else {
+        galleryGridEl.innerHTML =
+          "<div style='font-size:13px;color:var(--muted);text-align:center;'>Photos will be added soon.</div>";
+        galleryMoreEl.style.display = "none";
+      }
+
+      // RSVP extra info
+      const rsvpDeadline =
+        getField(d, "rsvp.deadline") ||
+        getField(d, "rsvp_deadline") ||
+        d.rsvp_deadline ||
+        "";
+      const rsvpContactName =
+        getField(d, "rsvp.contact_name") ||
+        getField(d, "rsvp_contact_name") ||
+        "";
+      const rsvpContactNumber =
+        getField(d, "rsvp.contact_number") ||
+        getField(d, "rsvp_contact_number") ||
+        "";
+
+      const rsvpLines = [];
+      if (rsvpDeadline) rsvpLines.push(`Kindly RSVP on or before ${formatDate(rsvpDeadline)}.`);
+      if (rsvpContactName || rsvpContactNumber) {
+        let line = "For questions, you may contact";
+        if (rsvpContactName) line += ` ${rsvpContactName}`;
+        if (rsvpContactNumber) line += ` at ${rsvpContactNumber}`;
+        line += ".";
+        rsvpLines.push(line);
+      }
+      rsvpExtraEl.textContent = rsvpLines.join("\n");
+
+      // Notes / reminders
+      const notes =
+        getField(d, "notes") ||
+        getField(d, "reminders") ||
+        getField(d, "guest_notes") ||
+        d.rsvp_note ||
+        "";
+      notesTextEl.textContent = notes || "";
+
+      // Hashtag
+      let hashtag =
+        getField(d, "hashtag") ||
+        getField(d, "social.hashtag") ||
+        "";
+      if (hashtag) {
+        if (!hashtag.startsWith("#")) hashtag = `#${hashtag}`;
+        hashtagTextEl.textContent = `Wedding hashtag: ${hashtag}`;
+      } else {
+        hashtagTextEl.textContent = "";
+      }
+
+      inviteShellEl.style.display = "block";
+    }
+
+    function renderRSVPList(rsvps) {
+      rsvpListEl.innerHTML = "";
+      if (!Array.isArray(rsvps) || rsvps.length === 0) {
+        rsvpListEl.innerHTML =
+          "<div style='font-size:12px;color:var(--muted);padding-top:4px;'>No responses yet. Be the first to RSVP.</div>";
+        return;
+      }
+
+      rsvps.forEach((row) => {
+        const item = document.createElement("div");
+        item.className = "rsvp-item";
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "rsvp-name-row";
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "rsvp-name";
+        nameEl.textContent = row.name || "Guest";
+
+        const statusEl = document.createElement("div");
+        statusEl.className = "rsvp-status";
+        statusEl.textContent = prettyRSVPStatus(row.status);
+
+        nameRow.appendChild(nameEl);
+        nameRow.appendChild(statusEl);
+        item.appendChild(nameRow);
+
+        const meta = document.createElement("div");
+        meta.className = "rsvp-meta";
+        const parts = [];
+        if (row.persons) parts.push(`${row.persons} guest${row.persons > 1 ? "s" : ""}`);
+        if (row.created_at) parts.push(formatTimeAgo(row.created_at));
+        meta.textContent = parts.join(" · ");
+        item.appendChild(meta);
+
+        if (row.message) {
+          const msg = document.createElement("div");
+          msg.className = "rsvp-message";
+          msg.textContent = row.message;
+          item.appendChild(msg);
+        }
+
+        rsvpListEl.appendChild(item);
+      });
+    }
+
+    // ✅ Ensures we use invites-new first, with safe fallback if needed
+    async function fetchInviteRow(inviteId) {
+      let res = await supabase
+        .from("invites-new")
+        .select("*")
+        .eq("id", inviteId)
+        .maybeSingle();
+
+      if (!res.error && res.data) return res;
+
+      // fallback: if your table/view is mistakenly named with underscore
+      let res2 = await supabase
+        .from("invites_new")
+        .select("*")
+        .eq("id", inviteId)
+        .maybeSingle();
+
+      if (!res2.error && res2.data) return res2;
+
+      return res.error ? res : res2;
+    }
+
+    async function loadInviteAndRSVPs() {
+      if (!inviteId) {
+        showError("Missing invitation ID in the link.");
+        return;
+      }
+      setLoading(true);
+
+      try {
+        const { data: inviteRow, error: inviteError } = await fetchInviteRow(inviteId);
+
+        if (inviteError) {
+          console.error("Error loading invite:", inviteError);
+          showError("We couldn’t open this invitation at the moment.");
+          return;
+        }
+
+        if (!inviteRow) {
+          showError("Invitation not found. Kindly check with your host.");
+          return;
+        }
+
+        const data = inviteRow.data || inviteRow; // invites-new stores JSON in data
+        renderInvite(data);
+
+        const { data: rsvps, error: rsvpError } = await supabase
+          .from("rsvps")
+          .select("id, name, status, persons, message, created_at")
+          .eq("invite_id", inviteId)
+          .order("created_at", { ascending: true });
+
+        if (rsvpError) {
+          console.error("Error loading RSVPs:", rsvpError);
+          renderRSVPList([]);
+        } else {
+          renderRSVPList(rsvps || []);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        showError("Something went wrong opening this invitation.");
+      }
+    }
+
+    async function submitRSVP(event) {
+      event.preventDefault();
+      if (!inviteId) return;
+
+      const name = (rsvpNameEl.value || "").trim();
+      const status = rsvpStatusEl.value || "going";
+      const persons = parseInt(rsvpPersonsEl.value || "1", 10) || 1;
+      const message = (rsvpMessageEl.value || "").trim();
+
+      if (!name) {
+        rsvpNameEl.focus();
+        return;
+      }
+
+      try {
+        const payload = { invite_id: inviteId, name, status, persons, message };
+
+        const { data, error } = await supabase
+          .from("rsvps")
+          .insert(payload)
+          .select("id, name, status, persons, message, created_at")
+          .single();
+
+        if (error) {
+          console.error("Error saving RSVP:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Oops",
+            text: "We couldn’t save your RSVP. Please try again in a moment."
+          });
+          return;
+        }
+
+        rsvpPersonsEl.value = "1";
+        rsvpMessageEl.value = "";
+
+        const { data: rsvpsNew } = await supabase
+          .from("rsvps")
+          .select("id, name, status, persons, message, created_at")
+          .eq("invite_id", inviteId)
+          .order("created_at", { ascending: true });
+
+        renderRSVPList(rsvpsNew || []);
+
+        Swal.fire({
+          icon: "success",
+          title: "Thank you!",
+          text: "Your RSVP has been recorded."
+        });
+      } catch (err) {
+        console.error(err);
+        Swal.fire({
+          icon: "error",
+          title: "Oops",
+          text: "We encountered an error. Please try again."
+        });
+      }
+    }
+
+    // Lightbox
+    function openLightbox(index) {
+      if (!galleryPhotos.length) return;
+      currentPhotoIndex = index;
+      updateLightboxImage();
+      lightboxEl.style.display = "block";
+      document.body.style.overflow = "hidden";
+    }
+    function closeLightbox() {
+      lightboxEl.style.display = "none";
+      document.body.style.overflow = "";
+    }
+    function updateLightboxImage() {
+      if (!galleryPhotos.length) return;
+      lightboxImageEl.src = galleryPhotos[currentPhotoIndex];
+    }
+    function showNextPhoto() {
+      if (!galleryPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % galleryPhotos.length;
+      updateLightboxImage();
+    }
+    function showPrevPhoto() {
+      if (!galleryPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+      updateLightboxImage();
+    }
+
+    // Scroll animations
+    function initScrollAnimations() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("in-view");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.12 }
+      );
+
+      document.querySelectorAll(".section-animate").forEach((el) => observer.observe(el));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        showError("Supabase credentials are missing. Please configure this theme file.");
+        return;
+      }
+
+      inviteShellEl.style.display = "none";
+      rsvpFormEl.addEventListener("submit", submitRSVP);
+
+      initScrollAnimations();
+      loadInviteAndRSVPs();
+
+      if (lightboxCloseEl) lightboxCloseEl.addEventListener("click", closeLightbox);
+      if (lightboxBackdropEl) lightboxBackdropEl.addEventListener("click", closeLightbox);
+      if (lightboxNextEl) lightboxNextEl.addEventListener("click", showNextPhoto);
+      if (lightboxPrevEl) lightboxPrevEl.addEventListener("click", showPrevPhoto);
+
+      document.addEventListener("keydown", (e) => {
+        if (lightboxEl.style.display === "block") {
+          if (e.key === "Escape") closeLightbox();
+          if (e.key === "ArrowRight") showNextPhoto();
+          if (e.key === "ArrowLeft") showPrevPhoto();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

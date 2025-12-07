@@ -1,0 +1,88 @@
+/* Strip Leaflet popup chrome */
+.venue-popup .leaflet-popup-content-wrapper {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+.venue-popup .leaflet-popup-tip-container,
+.venue-popup .leaflet-popup-tip {
+  display: none;
+}
+.venue-popup .leaflet-popup-content { margin: 0; }
+
+/* ---------- Customizable variables ---------- */
+.venue-popup {
+  --vp-bg: #fff;                 /* card background */
+  --vp-border: #e5e7eb;          /* card border color */
+  --vp-arrow: 8px;               /* arrow size (fill) */
+  --vp-arrow-border: calc(var(--vp-arrow) + 1px); /* arrow border size */
+  --vp-arrow-offset: 50%;        /* horizontal position of arrow */
+  --vp-arrow-shadow: 0 2px 6px rgba(2, 6, 23, .12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .venue-popup {
+    --vp-bg: #0f172a;
+    --vp-border: rgba(255,255,255,.12);
+    --vp-arrow-shadow: 0 2px 6px rgba(0,0,0,.4);
+  }
+}
+
+/* If you use a class-based dark theme, uncomment:
+.dark .venue-popup {
+  --vp-bg: #0f172a;
+  --vp-border: rgba(255,255,255,.12);
+  --vp-arrow-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+*/
+
+/* ---------- Card + Arrow ---------- */
+.venue-popup .venue-card {
+  position: relative;
+  background: var(--vp-bg);
+  border: 1px solid var(--vp-border);
+  border-radius: 12px;
+}
+
+/* Border layer (slightly larger triangle) */
+.venue-popup .venue-card::before {
+  content: "";
+  position: absolute;
+  left: var(--vp-arrow-offset);
+  bottom: calc(-1 * var(--vp-arrow-border));
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: var(--vp-arrow-border) solid transparent;
+  border-right: var(--vp-arrow-border) solid transparent;
+  border-top: var(--vp-arrow-border) solid var(--vp-border);
+  pointer-events: none;
+}
+
+/* Fill layer (sits atop the border triangle) */
+.venue-popup .venue-card::after {
+  content: "";
+  position: absolute;
+  left: var(--vp-arrow-offset);
+  bottom: calc(-1 * var(--vp-arrow));
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: var(--vp-arrow) solid transparent;
+  border-right: var(--vp-arrow) solid transparent;
+  border-top: var(--vp-arrow) solid var(--vp-bg);
+  pointer-events: none;
+  /* add subtle shadow so the arrow matches the card elevation */
+  filter: drop-shadow(var(--vp-arrow-shadow));
+}
+
+
+/* Tiny bottom arrow (centered) */
+.venue-popup .venue-card::before,
+.venue-popup .venue-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  pointer-events: none;
+}

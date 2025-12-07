@@ -1,0 +1,558 @@
+:root{
+  --accent-color:#635bff;          /* Canva-style purple */
+  --accent-dark:#4f46e5;
+  --accent-soft:rgba(99,91,255,0.08);
+  --bg-color:#f5f7fb;
+  --input-bg:#ffffff;
+  --input-border:#d0d7e2;
+  --pill-bg:#eef2ff;
+  --pill-active:#635bff;
+  --pill-active-text:#ffffff;
+}
+
+/* ========== FORM SHELL ========== */
+.vf-form{
+  background:#ffffff;
+  padding:24px 24px 32px;
+  border-radius:20px;
+  box-shadow:0 18px 40px rgba(15,23,42,0.08);
+  max-width:900px;
+  font-family:Inter,system-ui,Arial,sans-serif;
+  font-size:14px;
+  color:#1f2933;
+  margin-bottom:60px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+
+.vf-title{
+  text-align:center;
+  margin-bottom:16px;
+}
+
+/* ========== LABELS & INPUTS ========== */
+.vf-label{
+  display:block;
+  margin:14px 0 8px;
+  font-weight:600;
+  color:#0f172a;
+}
+
+.vf-form input,
+.vf-form textarea,
+.vf-form select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--input-border);
+  border-radius:10px;
+  background:var(--input-bg);
+  font-size:14px;
+  color:#111827;
+  box-sizing:border-box;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.vf-form input:focus,
+.vf-form textarea:focus,
+.vf-form select:focus{
+  outline:none;
+  border-color:var(--accent-color);
+  box-shadow:0 0 0 1px rgba(99,91,255,0.3);
+}
+
+/* small helper */
+.vf-note-block{
+  background:#eef2ff;
+  border-left:4px solid var(--accent-color);
+  padding:12px;
+  font-size:13px;
+  color:#374151;
+  margin:10px 0;
+  border-radius:10px;
+}
+
+/* ========== PILL CHECKBOX GROUP ========== */
+.checkbox-group{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:8px 0 12px;
+}
+.checkbox-group label{
+  display:flex;
+  align-items:center;
+  cursor:pointer;
+}
+.checkbox-group input{
+  display:none;
+}
+.checkbox-group span{
+  padding:6px 12px;
+  border:1px solid var(--input-border);
+  border-radius:999px;
+  background:var(--pill-bg);
+  transition:.18s background ease,.18s color ease,.18s border-color ease;
+  font-weight:500;
+}
+.checkbox-group input:checked + span{
+  background:var(--pill-active);
+  color:var(--pill-active-text);
+  border-color:var(--pill-active);
+}
+
+/* ========== DROPDOWN MULTI-SELECT ========== */
+.vf-dropdown{
+  margin:10px 0 6px;
+}
+
+.selectBox{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border:1px solid var(--input-border);
+  padding:10px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  background:#ffffff;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.selectBox:hover{
+  border-color:#cbd5e1;
+  box-shadow:0 0 0 1px rgba(148,163,184,0.3);
+}
+
+.checkboxes{
+  border:1px solid var(--input-border);
+  border-top:none;
+  max-height:220px;
+  overflow:auto;
+  background:#fff;
+  padding:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  border-radius:0 0 10px 10px;
+}
+
+.checkboxes label{
+  display:inline-flex;
+  align-items:center;
+  cursor:pointer;
+}
+
+.checkboxes input{
+  display:none;
+}
+
+.checkboxes input:checked + span{
+  background:var(--pill-active);
+  color:var(--pill-active-text);
+}
+
+.checkboxes span{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:999px;
+  background:var(--pill-bg);
+  transition:background .18s ease, color .18s ease;
+  font-size:13px;
+}
+
+.selected-pill{
+  display:inline-block;
+  background:var(--pill-active);
+  color:#fff;
+  padding:6px 10px;
+  margin:2px 6px 2px 0;
+  border-radius:999px;
+  font-size:13px;
+}
+
+/* ========== GALLERY / DROP AREA ========== */
+.drop-area{
+  border:2px dashed #635bff;
+  border-radius:16px;
+  padding:24px;
+  text-align:center;
+  color:#4b5563;
+  background:#f4f4ff;
+  cursor:pointer;
+  transition:background .25s ease,border-color .2s ease,transform .1s ease;
+  margin-bottom:16px;
+}
+.drop-area:hover{
+  background:var(--accent-soft);
+  transform:translateY(-1px);
+}
+
+.gallery-preview{
+  margin-top:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.thumbnail-wrapper{
+  position:relative;
+  display:inline-block;
+}
+.thumbnail-wrapper img{
+  height:80px;
+  width:80px;
+  border-radius:10px;
+  object-fit:cover;
+  box-shadow:0 6px 18px rgba(15,23,42,0.25);
+}
+.remove-btn{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  background:#ef4444;
+  color:#fff;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:bold;
+  cursor:pointer;
+  padding:2px 7px;
+  line-height:1;
+  box-shadow:0 0 4px rgba(0,0,0,0.35);
+  transition:background .15s ease, transform .1s ease;
+}
+.remove-btn:hover{
+  background:#dc2626;
+  transform:scale(1.03);
+}
+
+/* ========== SMALL CTA BUTTON (CHIP STYLE) ========== */
+.add-btn2{
+  padding:10px 20px;
+  border:none;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  transition:background .18s ease, transform .09s ease, box-shadow .18s ease;
+  box-shadow:0 4px 10px rgba(15,23,42,0.12);
+}
+.add-btn2.primary{
+  background:linear-gradient(135deg,#635bff,#ff6ad5);
+  color:#fff;
+}
+.add-btn2.primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 22px rgba(99,91,255,0.4);
+}
+
+/* ========== CARD BLOCKS ========== */
+.vf-card{
+  background:#ffffff;
+  border:1px solid rgba(148,163,184,0.35);
+  border-radius:18px;
+  padding:16px 16px 18px;
+  margin:18px 0;
+  box-shadow:0 10px 24px rgba(15,23,42,0.07);
+}
+.vf-h3{
+  font-size:1.125rem;
+  font-weight:700;
+  margin:0 0 10px;
+  color:#0f172a;
+}
+.vf-h4{
+  font-size:1rem;
+  font-weight:700;
+  margin:0 0 10px;
+}
+
+.vf-field{
+  margin-bottom:14px;
+}
+
+/* ========== RADIO GROUPS / CHIPS ========== */
+.vf-radio-group{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.vf-radio span{
+  display:block;
+}
+.vf-help{
+  display:block;
+  color:#6b7280;
+  font-size:.85rem;
+  margin-top:4px;
+}
+.vf-radio-group-inline{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.vf-chip{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  cursor:pointer;
+  border:0 !important;
+  background:transparent !important;
+  padding:0 !important;
+}
+
+.vf-chip > input{
+  position:absolute;
+  inset:0;
+  margin:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.vf-chip-text{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
+  height:40px;
+  padding:0 14px;
+  border:1px solid #e2e8f0;
+  border-radius:999px;
+  background:#ffffff;
+  color:#0f172a;
+  font-weight:500;
+  line-height:1;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+
+.vf-chip:hover .vf-chip-text{
+  border-color:#cbd5e1;
+}
+
+/* Focus ring */
+.vf-chip > input:focus-visible + .vf-chip-text{
+  border-color:transparent;
+  box-shadow:0 0 0 3px rgba(99,91,255,0.35);
+}
+
+/* Selected state */
+.vf-chip > input:checked + .vf-chip-text{
+  border-color:#635bff;
+  background:var(--accent-soft);
+  color:#635bff;
+}
+
+.vf-chip > input:checked + .vf-chip-text::before{
+  content:"✓";
+  font-weight:700;
+  margin-right:8px;
+}
+
+/* Disabled */
+.vf-chip > input:disabled + .vf-chip-text{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+/* ========== GENERIC CHECKBOX LINE-UP ========== */
+.vf-checkbox{
+  display:inline-flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.vf-checkbox input{
+  margin-top:2px;
+}
+
+/* Acknowledgement / footnote block */
+.vf-ack{
+  border-top:1px dashed #e5e7eb;
+  padding-top:12px;
+}
+
+/* ========== FOOTER BUTTON ROW ========== */
+.vf-footer{
+  position:sticky;
+  bottom:0;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  background:#ffffff;
+  padding:12px 0;
+  margin-top:16px;
+  border-top:1px solid #dce3ee;
+}
+
+/* ========== MODAL ========== */
+.vf-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.vf-modal-content{
+  background:#ffffff;
+  width:min(560px, 92vw);
+  border-radius:20px;
+  padding:18px 18px 16px;
+  box-shadow:0 24px 60px rgba(15,23,42,0.35);
+}
+
+.vf-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+
+/* Primary button inside modal */
+.vf-btn{
+  background:var(--accent-color);
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  padding:10px 16px;
+  cursor:pointer;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  box-shadow:0 10px 22px rgba(99,91,255,0.4);
+  transition:transform .08s ease, box-shadow .16s ease, filter .16s ease;
+}
+.vf-btn:hover{
+  filter:brightness(1.05);
+  transform:translateY(-1px);
+}
+.vf-list{
+  margin:0 0 10px 18px;
+}
+
+/* keeps suggestions above the Leaflet panes */
+.vf-geo-wrapper{
+  position:relative;
+  z-index:10;
+}
+.vf-geo-suggest{
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  z-index:10000;
+}
+.vf-map{
+  position:relative;
+  z-index:1;
+}
+
+/* ========== LABEL STACKING ========== */
+.vf-form .vf-label{
+  display:block;
+  margin:12px 0;
+}
+.vf-form .vf-label > input,
+.vf-form .vf-label > select,
+.vf-form .vf-label > textarea{
+  margin-top:6px;
+}
+
+/* field action links (like "See example") */
+.vf-field .vf-link{
+  background:none;
+  border:none;
+  color:var(--accent-color);
+  cursor:pointer;
+  padding:0 6px;
+  text-decoration:underline;
+  font-weight:500;
+}
+
+/* ========== OPERATING DAYS PILLS ========== */
+.vf-day-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.vf-day{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  border:1px solid #e5e7eb;
+  border-radius:999px;
+  background:#ffffff;
+  cursor:pointer;
+  user-select:none;
+  transition:border-color .16s ease, background .16s ease;
+}
+
+.vf-day.is-on{
+  border-color:var(--accent-color);
+  background:var(--accent-soft);
+}
+
+.vf-day input{
+  margin:0;
+  width:16px;
+  height:16px;
+  accent-color:var(--accent-color);
+}
+
+.vf-day span{
+  line-height:1;
+  white-space:nowrap;
+}
+
+/* ========== TIME ROW ========== */
+.vf-time-row{
+  display:flex;
+  align-items:flex-end;
+  flex-wrap:nowrap;
+  column-gap:12px;
+  row-gap:10px;
+  width:100%;
+}
+
+@supports not (gap: 1rem){
+  .vf-time-row{ margin:-5px; }
+  .vf-time-row > *{ margin:5px; }
+}
+
+.vf-label.vf-time-field{
+  display:block;
+  flex:1 1 0;
+  min-width:180px;
+  min-inline-size:0;
+}
+
+.vf-label.vf-time-field input[type="time"]{
+  display:block;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  -webkit-appearance:none;
+  appearance:none;
+  font-size:16px;
+  padding:10px 12px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  background:#ffffff;
+}
+
+/* Stack on narrow phones */
+@media (max-width:420px){
+  .vf-time-row{ flex-wrap:wrap; }
+  .vf-label.vf-time-field{ flex-basis:100%; }
+}
+
+/* ========== DROPDOWN CARET SPA ========== */
+.selectBox .vf-caret{
+  flex:0 0 auto;
+  color:#475569;
+  transition:transform .2s ease;
+}
+.selectBox.open .vf-caret{
+  transform:rotate(180deg);
+}
