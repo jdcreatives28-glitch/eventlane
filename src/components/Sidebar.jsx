@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FaMapMarkerAlt, FaCalendarCheck } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCalendarCheck, FaInfoCircle, FaEnvelope } from 'react-icons/fa';
 import { FaHouse, FaMessage, FaBullhorn } from 'react-icons/fa6';
 import { useUnread } from '../context/UnreadProvider';
 
@@ -32,8 +32,7 @@ function Badge({ count }) {
         borderRadius: 999,
         fontSize: 10,
         fontWeight: 700,
-        background:
-          'linear-gradient(135deg, #635bff, #ff6ad5)',
+        background: 'linear-gradient(135deg, #635bff, #ff6ad5)',
         color: '#ffffff',
         boxShadow: '0 0 0 1px rgba(255,255,255,0.9)',
         lineHeight: 1.6,
@@ -60,11 +59,14 @@ export default function Sidebar() {
   }, [providerBookingUnread]);
 
   const items = [
-    { label: 'Home',     icon: <FaHouse />,        path: '/' },
-    { label: 'Social',   icon: <FaBullhorn />,     path: '/events' },
-    { label: 'Venues',   icon: <FaMapMarkerAlt />, path: '/venues' },
-    { label: 'Bookings', icon: <FaCalendarCheck />, path: '/booking',  count: bookingUnread },
-    { label: 'Messages', icon: <FaMessage />,      path: '/messages',  count: unread },
+    { label: 'Home',      icon: <FaHouse />,        path: '/' },
+    { label: 'Social',    icon: <FaBullhorn />,     path: '/events' },
+    { label: 'Venues',    icon: <FaMapMarkerAlt />, path: '/venues' },
+    { label: 'Bookings',  icon: <FaCalendarCheck />, path: '/booking',  count: bookingUnread },
+    { label: 'Messages',  icon: <FaMessage />,      path: '/messages',  count: unread },
+    // ✅ New static pages for Xendit requirements
+    { label: 'About Us',  icon: <FaInfoCircle />,   path: '/about' },
+    { label: 'Contact',   icon: <FaEnvelope />,     path: '/contact' },
   ];
 
   return (
@@ -107,7 +109,6 @@ export default function Sidebar() {
         >
           Navigation
         </span>
-
       </div>
 
       <nav
@@ -155,24 +156,21 @@ export default function Sidebar() {
                   background: isActive
                     ? 'linear-gradient(135deg, rgba(99,91,255,0.20), rgba(255,106,213,0.11))'
                     : 'rgba(255,255,255,0.80)',
-                  border: '1px solid transparent',   // ✅ overrides any CSS border
-                  borderLeft: 'none',                // ✅ explicitly removes left border
+                  border: '1px solid transparent',
+                  borderLeft: 'none',
                   cursor: 'pointer',
                   transition:
                     'background .16s ease, transform .1s ease, box-shadow .18s ease, color .12s ease, border-color .12s ease',
-                  
                   overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                  
                     e.currentTarget.style.transform = 'translateY(-1px)';
                     e.currentTarget.style.background = 'rgba(255,255,255,0.98)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                  
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.background = 'rgba(255,255,255,0.80)';
                   }
@@ -208,7 +206,7 @@ export default function Sidebar() {
                     background: isActive
                       ? 'rgba(255,255,255,0.95)'
                       : 'rgba(148,163,184,0.16)',
-                    color: isActive ? THEME.accent : THEME.textMuted, // ✅ purple when active
+                    color: isActive ? THEME.accent : THEME.textMuted,
                     boxShadow: isActive
                       ? '0 0 0 1px rgba(99,91,255,0.25)'
                       : 'none',

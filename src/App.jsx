@@ -20,6 +20,8 @@ import ResetPassword from './pages/ResetPassword';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import BookingForm from './pages/BookingForm';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 // 🔔 unread context
 import { useUnread } from './context/UnreadProvider';
@@ -224,6 +226,8 @@ export default function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/venues/:id/book" element={<BookingForm />} />
+            <Route path="/about" element={<About />} />
+<Route path="/contact" element={<Contact />} />
 
             {/* ✅ Reset password page for Supabase recovery link */}
             <Route path="/reset-password" element={<ResetPassword />} />

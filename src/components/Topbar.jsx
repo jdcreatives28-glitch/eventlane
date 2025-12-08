@@ -12,7 +12,10 @@ import {
   FaCheck,
   FaExclamationTriangle,
   FaChartBar,
-  FaListAlt
+  FaListAlt,
+  FaBars,
+  FaInfoCircle,
+  FaEnvelope,
 } from 'react-icons/fa';
 import NeutralAvatar from './NeutralAvatar';
 import ProfileAvatarUploader from './ProfileAvatarUploader';
@@ -119,6 +122,21 @@ export default function Topbar({ onLoginClick }) {
 
   const menuRef = useRef(null);
   const navigate = useNavigate();
+
+  // 🔹 Track mobile vs desktop (for hamburger vs inline links)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 768;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window === 'undefined') return;
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auth
   useEffect(() => {
@@ -356,6 +374,7 @@ export default function Topbar({ onLoginClick }) {
 
       <div style={{ flexGrow: 1 }} />
 
+      {/* Right side */}
       <div ref={menuRef} style={styles.userWrap}>
         {user ? (
           <>
@@ -418,6 +437,30 @@ export default function Topbar({ onLoginClick }) {
                 >
                   <FaHeart style={styles.icon} /> Favorites
                 </button>
+
+                {/* About Us + Contact inside logged-in dropdown */}
+                <div style={styles.hr} />
+                <button
+                  role="menuitem"
+                  style={styles.item}
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/about');
+                  }}
+                >
+                  <FaInfoCircle style={styles.icon} /> About Us
+                </button>
+                <button
+                  role="menuitem"
+                  style={styles.item}
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/contact');
+                  }}
+                >
+                  <FaEnvelope style={styles.icon} /> Contact
+                </button>
+
                 <div style={styles.hr} />
                 <button
                   role="menuitem"
@@ -430,21 +473,81 @@ export default function Topbar({ onLoginClick }) {
             )}
           </>
         ) : (
-          // NOT LOGGED IN: show "Login" + profile icon, open auth modal on click
-          <button
-            type="button"
-            style={styles.loginBtn}
-            onClick={() => {
-              if (onLoginClick) {
-                onLoginClick();
-              } else {
-                navigate('/login');
-              }
-            }}
-          >
-            <FaUser style={{ fontSize: 16 , color: '#6366f1' }} />
-            <span>Login</span>
-          </button>
+          <>
+            {/* 🔹 Logged out: Mobile = hamburger menu, Desktop = inline buttons */}
+            {isMobile ? (
+              <>
+                <button
+                  type="button"
+                  style={styles.menuBtn}
+                  onClick={() => setOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={open}
+                >
+                  <FaBars style={{ fontSize: 18, color: '#4B5563' }} />
+                </button>
+
+                {open && (
+                  <div role="menu" style={styles.dropdown}>
+                    <button
+                      role="menuitem"
+                      style={styles.item}
+                      onClick={() => {
+                        setOpen(false);
+                        navigate('/about');
+                      }}
+                    >
+                      <FaInfoCircle style={styles.icon} /> About Us
+                    </button>
+                    <button
+                      role="menuitem"
+                      style={styles.item}
+                      onClick={() => {
+                        setOpen(false);
+                        navigate('/contact');
+                      }}
+                    >
+                      <FaEnvelope style={styles.icon} /> Contact
+                    </button>
+                    <div style={styles.hr} />
+                    <button
+                      role="menuitem"
+                      style={styles.item}
+                      onClick={() => {
+                        setOpen(false);
+                        if (onLoginClick) {
+                          onLoginClick();
+                        } else {
+                          navigate('/login');
+                        }
+                      }}
+                    >
+                      <FaUser style={styles.icon} /> Login
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              // 💻 Desktop: show About, Contact, Login inline (no hamburger)
+              <div style={styles.desktopLinksWrap}>
+                
+                <button
+                  type="button"
+                  style={styles.desktopLoginBtn}
+                  onClick={() => {
+                    if (onLoginClick) {
+                      onLoginClick();
+                    } else {
+                      navigate('/login');
+                    }
+                  }}
+                >
+                  <FaUser style={{ fontSize: 14 }} />
+                  <span>Login</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -541,6 +644,7 @@ const styles = {
     top: 0,
     zIndex: 50
   },
+
   brandWrap: {
     display: 'flex',
     alignItems: 'center',
@@ -574,6 +678,7 @@ const styles = {
   },
 
   userWrap: { position: 'relative' },
+
   userBtn: {
     display: 'flex',
     alignItems: 'center',
@@ -585,7 +690,40 @@ const styles = {
     fontSize: 16,
     color: '#0F172A'
   },
-  loginBtn: {
+
+  // Mobile hamburger button
+  menuBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    border: '1px solid #E5E7EB',
+    background: '#F9FAFB',
+    cursor: 'pointer',
+    padding: 0,
+  },
+
+  // Desktop inline links container
+  desktopLinksWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  desktopLinkBtn: {
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    padding: '6px 8px',
+    fontSize: 14,
+    color: '#4B5563',
+    borderRadius: 999,
+    fontWeight: 500,
+  },
+
+  desktopLoginBtn: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 6,
@@ -598,6 +736,7 @@ const styles = {
     color: '#111827',
     fontWeight: 500
   },
+
   dropdown: {
     position: 'absolute',
     right: 0,
