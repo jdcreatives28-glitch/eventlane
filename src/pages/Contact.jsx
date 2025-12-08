@@ -182,21 +182,18 @@ export default function Contact() {
                     textDecoration: 'none',
                   }}
                 >
-                  support@eventlane.ph
+                  jdcreatives28@gmail.com
                 </a>
               </li>
               <li>
                 <strong style={{ color: THEME.text }}>Phone:</strong>{' '}
-                <span>+63 917 000 0000</span>
+                <span>+63 975 707 7028</span>
               </li>
               <li>
                 <strong style={{ color: THEME.text }}>Business Address:</strong>{' '}
                 <span>Balanga City, Bataan, Philippines</span>
               </li>
-              <li>
-                <strong style={{ color: THEME.text }}>Operating Hours:</strong>{' '}
-                <span>Monday – Saturday, 9:00 AM – 6:00 PM (GMT+8)</span>
-              </li>
+
             </ul>
 
             <div
