@@ -1450,23 +1450,23 @@ input[type="time"] {
       return result;
     }
 
-    function slugifyName(str=""){
-  return String(str)
+function slugifyName(s=""){
+  return s
     .toLowerCase()
     .trim()
     .replace(/&/g, "and")
-    .replace(/[^a-z0-9\s-]/g, "")   // remove special chars
+    .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
 
-function buildInviteSlug(bride, groom){
-  const g = slugifyName(groom);
-  const b = slugifyName(bride);
-  if(!g && !b) return "";
-  // choose your preferred order:
-  return `${g || "groom"}-${b || "bride"}`;
+function buildInviteSlug(){
+  const g = slugifyName(data.groom || "groom");
+  const b = slugifyName(data.bride || "bride");
+  // add a short id suffix to avoid collisions
+  const suffix = (currentInviteId || generateInviteId(6)).slice(0,6).toLowerCase();
+  return `${g}-${b}-${suffix}`;
 }
 
 
@@ -2447,7 +2447,8 @@ async function uploadHotelPhotoFile(file, index){
        SAVE INVITE
        ===================== */
     async function saveInvite(showToast = true) {
-      const slug = buildInviteSlug(data?.bride, data?.groom);
+      const slug = slugifyCouple(data.groom, data.bride); // groom + bride
+
 
       if (!supabaseClient) return null;
 
@@ -2553,16 +2554,28 @@ async function uploadHotelPhotoFile(file, index){
     }
 
 function buildGuestUrl(inviteId) {
-  const guestPath = getGuestTemplatePath();
+  const slug = slugifyCouple(data.groom, data.bride);
+  // use a dedicated guest entry file (recommended)
+  return `${window.location.origin}/i/${encodeURIComponent(slug)}`;
+}
 
-  const slug = buildInviteSlug(data?.bride, data?.groom);
-  // Prefer slug route if available, fallback to ?id=
-  if (slug) {
-    // Example pretty route: /i/<slug>
-    return `${window.location.origin}/i/${encodeURIComponent(slug)}`;
-  }
 
-  return `${window.location.origin}${guestPath}?id=${encodeURIComponent(inviteId)}`;
+
+function slugifyCouple(groom, bride){
+  const clean = (s) => String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+
+  const g = clean(groom);
+  const b = clean(bride);
+
+  // pick your format:
+  // return `${g}-${b}`;                 // jamie-alexandra
+  return `${g}-and-${b}`;               // jamie-and-alexandra
 }
 
 

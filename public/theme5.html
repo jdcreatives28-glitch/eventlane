@@ -1841,234 +1841,311 @@ function setupCountdown(dateStr, timeStr) {
     }
 
     /* --- RENDER --- */
-    async function init() {
-      const loading = document.getElementById("loading");
-      const errorEl = document.getElementById("error");
-      const root = document.getElementById("invite-root");
+async function init() {
+  const loading = document.getElementById("loading");
+  const errorEl = document.getElementById("error");
+  const root = document.getElementById("invite-root");
 
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      currentInviteId = id;
+  // --- get identifiers from URL ---
+  const params = new URLSearchParams(window.location.search);
 
-      if (!window.supabase || !id) {
-        loading.classList.add("hidden");
-        errorEl.classList.remove("hidden");
-        return;
-      }
+  // ✅ supports: ?id=..., ?slug=..., ?s=...
+  let id = params.get("id");
+  let slug = params.get("slug") || params.get("s");
 
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // ✅ supports: eventlane.ph/<slug>  OR  eventlane.ph/groom&bride
+  // (ignore theme file names like /theme5.html)
+  const pathLast = decodeURIComponent((window.location.pathname || "").split("/").filter(Boolean).pop() || "");
+  const pathSlug =
+    pathLast &&
+    !pathLast.toLowerCase().endsWith(".html") &&
+    !pathLast.toLowerCase().includes("theme") &&
+    !pathLast.toLowerCase().includes("index")
+      ? pathLast
+      : "";
 
-      const { data: row, error } = await supabaseClient
+  if (!slug && pathSlug) slug = pathSlug;
+
+  // ✅ do NOT require ?id anymore (we can load by slug)
+  if (!window.supabase || (!id && !slug)) {
+    loading.classList.add("hidden");
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  // ✅ prevent "Identifier 'supabase' has already been declared"
+  // (we're only using window.supabase + a single client var)
+  if (!supabaseClient) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  // --- fetch invite row ---
+  let row = null;
+  let lastError = null;
+
+  // We will try multiple columns for slug-like identifiers to avoid:
+  // "Could not find the 'slug' column ..."
+  const SLUG_COLUMNS_TO_TRY = ["slug", "share_slug", "share_code", "invite_code", "code", "short_code"];
+
+  // 1) If slug exists, try it against common columns
+  if (slug) {
+    for (const col of SLUG_COLUMNS_TO_TRY) {
+      const { data, error } = await supabaseClient
         .from(INVITES_TABLE)
         .select("*")
-        .eq("id", id)
+        .eq(col, slug)
         .maybeSingle();
 
-      if (error || !row) {
-        console.error("Error loading invite:", error);
-        loading.classList.add("hidden");
-        errorEl.classList.remove("hidden");
-        return;
+      if (!error && data) {
+        row = data;
+        break;
       }
 
-      // HERO
-      document.getElementById("hero-bride").textContent = row.bride || "Bride";
-      document.getElementById("hero-groom").textContent = row.groom || "Groom";
-      document.getElementById("hero-date").textContent = formatDate(row.wedding_date);
-      document.getElementById("hero-time").textContent = formatTime(row.wedding_time);
-
-      document.getElementById("hero-venue").textContent = (
-        row.main_venue_label || row.ceremony_name || row.ceremony_address || ""
-      ).toString().toUpperCase();
-
-      // Reception line under church venue
-      const receptionLabel = document.getElementById("hero-reception-label");
-      const receptionVenue = document.getElementById("hero-reception-venue");
-      if (hasText(row.reception_name) || hasText(row.reception_address)) {
-        receptionLabel.classList.remove("hidden");
-        receptionVenue.classList.remove("hidden");
-        receptionVenue.textContent = (row.reception_name || row.reception_address || "").toString().toUpperCase();
-      } else {
-        receptionLabel.classList.add("hidden");
-        receptionVenue.classList.add("hidden");
+      // If the column doesn't exist (PGRST204), just try next column
+      if (error) lastError = error;
+      if (error && error.code !== "PGRST204") {
+        // other errors (like 401/permission) should stop immediately
+        break;
       }
-
-      // 🔝 Topbar text
-      const topNamesMain = document.getElementById("topbar-names-main");
-      const topNamesSub = document.getElementById("topbar-names-sub");
-
-      if (topNamesMain) {
-        const bride = row.bride || "Bride";
-        const groom = row.groom || "Groom";
-        topNamesMain.textContent = `${bride} & ${groom}`;
-      }
-      if (topNamesSub) {
-        const dateStr = formatDate(row.wedding_date);
-        const timeStr = formatTime(row.wedding_time);
-        topNamesSub.textContent = [dateStr, timeStr].filter(Boolean).join(" · ");
-      }
-
-      // Setup countdown
-      setupCountdown(row.wedding_date, row.wedding_time);
-
-      // Photos
-      if (row.media_photos) {
-        galleryPhotos = Array.isArray(row.media_photos)
-          ? row.media_photos
-          : String(row.media_photos).split(",").map((s) => s.trim()).filter(Boolean);
-      } else {
-        galleryPhotos = [];
-      }
-
-      const heroUrl = galleryPhotos[0] || row.ceremony_photo_url || row.reception_photo_url || "";
-      if (heroUrl) {
-        const avatarEl = document.getElementById("topbar-avatar");
-        if (avatarEl) avatarEl.src = heroUrl;
-
-        const heroBg = document.getElementById("hero-bg");
-        if (heroBg) {
-          heroBg.style.backgroundImage = "url('" + heroUrl + "')";
-          setTimeout(() => heroBg.classList.add("loaded"), 100);
-        }
-
-        const s1 = document.getElementById("slide-1");
-        if (s1) s1.src = heroUrl;
-        startHeroSlideshow();
-      }
-
-      // STORY / proposal / verse (and hide section if empty)
-      const storyText = hasText(row.our_story) ? row.our_story : "";
-      const proposalText = hasText(row.proposal_story) ? row.proposal_story : "";
-      const verseText = hasText(row.verse_text) ? row.verse_text : "";
-      const verseRef = hasText(row.verse_reference) ? row.verse_reference : "";
-
-      const storySection = document.getElementById("story-section");
-      const shouldShowStory = hasText(storyText) || hasText(proposalText) || hasText(verseText);
-
-      if (shouldShowStory) {
-        document.getElementById("our-story").textContent = storyText;
-        document.getElementById("proposal-story").textContent = proposalText;
-
-        if (hasText(verseText)) {
-          document.getElementById("verse-block").classList.remove("hidden");
-          document.getElementById("verse-text").textContent = '"' + verseText + '"';
-          document.getElementById("verse-ref").textContent = verseRef;
-        } else {
-          document.getElementById("verse-block").classList.add("hidden");
-        }
-
-        storySection.classList.remove("hidden");
-        toggleNavFor("story-section", true);
-      } else {
-        storySection.classList.add("hidden");
-        toggleNavFor("story-section", false);
-      }
-
-      // Ceremony
-      const hasCeremony = hasText(row.ceremony_name) || hasText(row.ceremony_address) || hasText(row.ceremony_notes) || hasText(row.ceremony_photo_url) || hasText(row.ceremony_map_url);
-      if (hasCeremony) {
-        document.getElementById("ceremony-name").textContent = row.ceremony_name || "Ceremony";
-        document.getElementById("ceremony-address").textContent = row.ceremony_address || "";
-        document.getElementById("ceremony-notes").textContent = row.ceremony_notes || "";
-
-        if (hasText(row.ceremony_map_url)) {
-          const el = document.getElementById("ceremony-map");
-          el.href = row.ceremony_map_url;
-          el.classList.remove("hidden");
-        }
-
-if (hasText(row.ceremony_photo_url)) {
-  const wrap = document.getElementById("ceremony-photo-wrap");
-  const img = document.getElementById("ceremony-photo");
-  img.src = row.ceremony_photo_url;
-  wrap.style.display = "block";
-
-  if (hasText(row.ceremony_map_url)) {
-    const qrBox = document.getElementById("ceremony-qr");
-    const qrImg = document.getElementById("ceremony-qr-img");
-    const qrLabel = document.getElementById("ceremony-qr-label");
-
-    qrImg.src = qrUrl(row.ceremony_map_url, 220);
-    qrBox.classList.remove("hidden");
-    qrLabel.classList.remove("hidden");
+    }
   }
-}
 
-      } else {
-        document.getElementById("ceremony-card").classList.add("hidden");
-      }
+  // 2) Fallback to id lookup
+  if (!row && id) {
+    const { data, error } = await supabaseClient
+      .from(INVITES_TABLE)
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-      // Reception
-      const hasReception = hasText(row.reception_name) || hasText(row.reception_address) || hasText(row.reception_notes) || hasText(row.reception_photo_url) || hasText(row.reception_map_url);
-      if (hasReception) {
-        document.getElementById("reception-name").textContent = row.reception_name || "Reception";
-        document.getElementById("reception-address").textContent = row.reception_address || "";
-        document.getElementById("reception-notes").textContent = row.reception_notes || "";
-
-        if (hasText(row.reception_map_url)) {
-          const el = document.getElementById("reception-map");
-          el.href = row.reception_map_url;
-          el.classList.remove("hidden");
-        }
-
-if (hasText(row.reception_photo_url)) {
-  const wrap = document.getElementById("reception-photo-wrap");
-  const img = document.getElementById("reception-photo");
-  img.src = row.reception_photo_url;
-  wrap.style.display = "block";
-
-  if (hasText(row.reception_map_url)) {
-    const qrBox = document.getElementById("reception-qr");
-    const qrImg = document.getElementById("reception-qr-img");
-    const qrLabel = document.getElementById("reception-qr-label");
-
-    qrImg.src = qrUrl(row.reception_map_url, 220);
-    qrBox.classList.remove("hidden");
-    qrLabel.classList.remove("hidden");
+    if (!error && data) row = data;
+    if (error) lastError = error;
   }
-}
 
-      } else {
-        document.getElementById("reception-card").classList.add("hidden");
+  // 3) Still no row => show not found
+  if (!row) {
+    console.error("Error loading invite:", lastError);
+
+    // If this is 401, it’s almost always RLS / permissions / anon key issue
+    // (Your code is fine, but the DB is blocking reads)
+    loading.classList.add("hidden");
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  // ✅ set currentInviteId from DB row (so RSVP works even when using slug-only links)
+  currentInviteId = row.id || id || null;
+
+  // =========================
+  // ✅ everything below is your existing render logic (unchanged)
+  // =========================
+
+  // HERO
+  document.getElementById("hero-bride").textContent = row.bride || "Bride";
+  document.getElementById("hero-groom").textContent = row.groom || "Groom";
+  document.getElementById("hero-date").textContent = formatDate(row.wedding_date);
+  document.getElementById("hero-time").textContent = formatTime(row.wedding_time);
+
+  document.getElementById("hero-venue").textContent = (
+    row.main_venue_label || row.ceremony_name || row.ceremony_address || ""
+  ).toString().toUpperCase();
+
+  // Reception line under church venue
+  const receptionLabel = document.getElementById("hero-reception-label");
+  const receptionVenue = document.getElementById("hero-reception-venue");
+  if (hasText(row.reception_name) || hasText(row.reception_address)) {
+    receptionLabel.classList.remove("hidden");
+    receptionVenue.classList.remove("hidden");
+    receptionVenue.textContent = (row.reception_name || row.reception_address || "").toString().toUpperCase();
+  } else {
+    receptionLabel.classList.add("hidden");
+    receptionVenue.classList.add("hidden");
+  }
+
+  // 🔝 Topbar text
+  const topNamesMain = document.getElementById("topbar-names-main");
+  const topNamesSub = document.getElementById("topbar-names-sub");
+
+  if (topNamesMain) {
+    const bride = row.bride || "Bride";
+    const groom = row.groom || "Groom";
+    topNamesMain.textContent = `${bride} & ${groom}`;
+  }
+  if (topNamesSub) {
+    const dateStr = formatDate(row.wedding_date);
+    const timeStr = formatTime(row.wedding_time);
+    topNamesSub.textContent = [dateStr, timeStr].filter(Boolean).join(" · ");
+  }
+
+  // Setup countdown
+  setupCountdown(row.wedding_date, row.wedding_time);
+
+  // Photos
+  if (row.media_photos) {
+    galleryPhotos = Array.isArray(row.media_photos)
+      ? row.media_photos
+      : String(row.media_photos).split(",").map((s) => s.trim()).filter(Boolean);
+  } else {
+    galleryPhotos = [];
+  }
+
+  const heroUrl = galleryPhotos[0] || row.ceremony_photo_url || row.reception_photo_url || "";
+  if (heroUrl) {
+    const avatarEl = document.getElementById("topbar-avatar");
+    if (avatarEl) avatarEl.src = heroUrl;
+
+    const heroBg = document.getElementById("hero-bg");
+    if (heroBg) {
+      heroBg.style.backgroundImage = "url('" + heroUrl + "')";
+      setTimeout(() => heroBg.classList.add("loaded"), 100);
+    }
+
+    const s1 = document.getElementById("slide-1");
+    if (s1) s1.src = heroUrl;
+    startHeroSlideshow();
+  }
+
+  // STORY / proposal / verse (and hide section if empty)
+  const storyText = hasText(row.our_story) ? row.our_story : "";
+  const proposalText = hasText(row.proposal_story) ? row.proposal_story : "";
+  const verseText = hasText(row.verse_text) ? row.verse_text : "";
+  const verseRef = hasText(row.verse_reference) ? row.verse_reference : "";
+
+  const storySection = document.getElementById("story-section");
+  const shouldShowStory = hasText(storyText) || hasText(proposalText) || hasText(verseText);
+
+  if (shouldShowStory) {
+    document.getElementById("our-story").textContent = storyText;
+    document.getElementById("proposal-story").textContent = proposalText;
+
+    if (hasText(verseText)) {
+      document.getElementById("verse-block").classList.remove("hidden");
+      document.getElementById("verse-text").textContent = '"' + verseText + '"';
+      document.getElementById("verse-ref").textContent = verseRef;
+    } else {
+      document.getElementById("verse-block").classList.add("hidden");
+    }
+
+    storySection.classList.remove("hidden");
+    toggleNavFor("story-section", true);
+  } else {
+    storySection.classList.add("hidden");
+    toggleNavFor("story-section", false);
+  }
+
+  // Ceremony
+  const hasCeremony =
+    hasText(row.ceremony_name) ||
+    hasText(row.ceremony_address) ||
+    hasText(row.ceremony_notes) ||
+    hasText(row.ceremony_photo_url) ||
+    hasText(row.ceremony_map_url);
+
+  if (hasCeremony) {
+    document.getElementById("ceremony-name").textContent = row.ceremony_name || "Ceremony";
+    document.getElementById("ceremony-address").textContent = row.ceremony_address || "";
+    document.getElementById("ceremony-notes").textContent = row.ceremony_notes || "";
+
+    if (hasText(row.ceremony_map_url)) {
+      const el = document.getElementById("ceremony-map");
+      el.href = row.ceremony_map_url;
+      el.classList.remove("hidden");
+    }
+
+    if (hasText(row.ceremony_photo_url)) {
+      const wrap = document.getElementById("ceremony-photo-wrap");
+      const img = document.getElementById("ceremony-photo");
+      img.src = row.ceremony_photo_url;
+      wrap.style.display = "block";
+
+      if (hasText(row.ceremony_map_url)) {
+        const qrBox = document.getElementById("ceremony-qr");
+        const qrImg = document.getElementById("ceremony-qr-img");
+        const qrLabel = document.getElementById("ceremony-qr-label");
+
+        qrImg.src = qrUrl(row.ceremony_map_url, 220);
+        qrBox.classList.remove("hidden");
+        qrLabel.classList.remove("hidden");
       }
+    }
+  } else {
+    document.getElementById("ceremony-card").classList.add("hidden");
+  }
 
-      // Hide whole Wedding Day section if both cards hidden
-      const weddingDaySection = document.getElementById("weddingday-section");
-      const ceremonyHidden = document.getElementById("ceremony-card").classList.contains("hidden");
-      const receptionHidden = document.getElementById("reception-card").classList.contains("hidden");
-      const showWeddingDay = !(ceremonyHidden && receptionHidden);
-      weddingDaySection.classList.toggle("hidden", !showWeddingDay);
-      toggleNavFor("weddingday-section", showWeddingDay);
+  // Reception
+  const hasReception =
+    hasText(row.reception_name) ||
+    hasText(row.reception_address) ||
+    hasText(row.reception_notes) ||
+    hasText(row.reception_photo_url) ||
+    hasText(row.reception_map_url);
 
-      // Dress code (own section after entourage)
-      const dressSection = document.getElementById("dress-section");
-      const hasDress =
-        hasText(row.dress_title) ||
-        hasText(row.dress_description) ||
-        hasText(row.dress_color1) ||
-        hasText(row.dress_color2) ||
-        hasText(row.dress_color3);
+  if (hasReception) {
+    document.getElementById("reception-name").textContent = row.reception_name || "Reception";
+    document.getElementById("reception-address").textContent = row.reception_address || "";
+    document.getElementById("reception-notes").textContent = row.reception_notes || "";
 
-      if (hasDress) {
-        dressSection.classList.remove("hidden");
-        document.getElementById("dress-title").textContent = row.dress_title || "Formal";
-        document.getElementById("dress-desc").textContent = row.dress_description || "";
-        const pal = document.getElementById("dress-colors");
-        pal.innerHTML = "";
-        [row.dress_color1, row.dress_color2, row.dress_color3]
-          .filter(hasText)
-          .forEach((c, i) => {
-            const d = document.createElement("div");
-            d.className = "p-circle anim-scale delay-" + (i + 1) * 100;
-            d.style.background = c;
-            pal.appendChild(d);
-          });
+    if (hasText(row.reception_map_url)) {
+      const el = document.getElementById("reception-map");
+      el.href = row.reception_map_url;
+      el.classList.remove("hidden");
+    }
 
-        toggleNavFor("dress-section", true);
-      } else {
-        dressSection.classList.add("hidden");
-        toggleNavFor("dress-section", false);
+    if (hasText(row.reception_photo_url)) {
+      const wrap = document.getElementById("reception-photo-wrap");
+      const img = document.getElementById("reception-photo");
+      img.src = row.reception_photo_url;
+      wrap.style.display = "block";
+
+      if (hasText(row.reception_map_url)) {
+        const qrBox = document.getElementById("reception-qr");
+        const qrImg = document.getElementById("reception-qr-img");
+        const qrLabel = document.getElementById("reception-qr-label");
+
+        qrImg.src = qrUrl(row.reception_map_url, 220);
+        qrBox.classList.remove("hidden");
+        qrLabel.classList.remove("hidden");
       }
+    }
+  } else {
+    document.getElementById("reception-card").classList.add("hidden");
+  }
+
+  // Hide whole Wedding Day section if both cards hidden
+  const weddingDaySection = document.getElementById("weddingday-section");
+  const ceremonyHidden = document.getElementById("ceremony-card").classList.contains("hidden");
+  const receptionHidden = document.getElementById("reception-card").classList.contains("hidden");
+  const showWeddingDay = !(ceremonyHidden && receptionHidden);
+  weddingDaySection.classList.toggle("hidden", !showWeddingDay);
+  toggleNavFor("weddingday-section", showWeddingDay);
+
+  // Dress code (own section after entourage)
+  const dressSection = document.getElementById("dress-section");
+  const hasDress =
+    hasText(row.dress_title) ||
+    hasText(row.dress_description) ||
+    hasText(row.dress_color1) ||
+    hasText(row.dress_color2) ||
+    hasText(row.dress_color3);
+
+  if (hasDress) {
+    dressSection.classList.remove("hidden");
+    document.getElementById("dress-title").textContent = row.dress_title || "Formal";
+    document.getElementById("dress-desc").textContent = row.dress_description || "";
+    const pal = document.getElementById("dress-colors");
+    pal.innerHTML = "";
+    [row.dress_color1, row.dress_color2, row.dress_color3].filter(hasText).forEach((c, i) => {
+      const d = document.createElement("div");
+      d.className = "p-circle anim-scale delay-" + (i + 1) * 100;
+      d.style.background = c;
+      pal.appendChild(d);
+    });
+
+    toggleNavFor("dress-section", true);
+  } else {
+    dressSection.classList.add("hidden");
+    toggleNavFor("dress-section", false);
+  }
 
       // ===== HOTELS RENDER =====
 const hotelsSection = document.getElementById("hotels-section");
