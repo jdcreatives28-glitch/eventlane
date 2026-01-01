@@ -1450,6 +1450,26 @@ input[type="time"] {
       return result;
     }
 
+    function slugifyName(str=""){
+  return String(str)
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9\s-]/g, "")   // remove special chars
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function buildInviteSlug(bride, groom){
+  const g = slugifyName(groom);
+  const b = slugifyName(bride);
+  if(!g && !b) return "";
+  // choose your preferred order:
+  return `${g || "groom"}-${b || "bride"}`;
+}
+
+
     function getDeep(obj, path) {
       return path.reduce((o, key) => (o && o[key] != null ? o[key] : ""), obj);
     }
@@ -2427,6 +2447,8 @@ async function uploadHotelPhotoFile(file, index){
        SAVE INVITE
        ===================== */
     async function saveInvite(showToast = true) {
+      const slug = buildInviteSlug(data?.bride, data?.groom);
+
       if (!supabaseClient) return null;
 
       if (!currentInviteId) currentInviteId = generateInviteId();
@@ -2435,6 +2457,8 @@ async function uploadHotelPhotoFile(file, index){
         id: currentInviteId,
         host_id: currentInviteId,
         theme: currentTheme,
+
+         slug: slug || null,
 
         bride: data.bride || null,
         groom: data.groom || null,
@@ -2488,6 +2512,8 @@ async function uploadHotelPhotoFile(file, index){
         theme_photos: data.theme_photos || null
       };
 
+      
+
       const { error } = await supabaseClient
         .from(TABLE_INVITES)
         .upsert(row, { onConflict: "id" });
@@ -2526,10 +2552,19 @@ async function uploadHotelPhotoFile(file, index){
       return currentPath.replace(/[^/]+$/, theme.file);
     }
 
-    function buildGuestUrl(inviteId) {
-      const guestPath = getGuestTemplatePath();
-      return `${window.location.origin}${guestPath}?id=${encodeURIComponent(inviteId)}`;
-    }
+function buildGuestUrl(inviteId) {
+  const guestPath = getGuestTemplatePath();
+
+  const slug = buildInviteSlug(data?.bride, data?.groom);
+  // Prefer slug route if available, fallback to ?id=
+  if (slug) {
+    // Example pretty route: /i/<slug>
+    return `${window.location.origin}/i/${encodeURIComponent(slug)}`;
+  }
+
+  return `${window.location.origin}${guestPath}?id=${encodeURIComponent(inviteId)}`;
+}
+
 
     async function handleShareClick() {
       const id = await saveInvite(false);

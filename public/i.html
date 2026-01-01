@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loading invitation…</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <script>
+    const SUPABASE_URL = "https://minftvflekxdoiubeujy.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+    const TABLE_INVITES = "invites-new";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function run(){
+      // URL example: /i/jamie-cruz-alexandra-santos
+      const parts = location.pathname.split("/").filter(Boolean);
+      const slug = parts[parts.length - 1];
+
+      if(!slug){
+        location.replace("/");
+        return;
+      }
+
+      const { data: row, error } = await supabaseClient
+        .from(TABLE_INVITES)
+        .select("id, theme")
+        .eq("slug", slug)
+        .maybeSingle();
+
+      if(error || !row){
+        document.body.innerHTML = "<p style='font-family:system-ui;padding:20px'>Invite not found.</p>";
+        return;
+      }
+
+      // Redirect to the correct theme file with ?id=
+      const themeFileByKey = {
+        "classic-warm": "theme1.html",
+        "elegant-white": "theme2.html",
+        "dark-gold": "theme3.html",
+        "pastel-green": "theme4.html",
+        "elegant-maroon": "theme5.html",
+        "emerald-vintage": "theme6.html",
+        "elegant-blue": "theme7.html",
+      };
+
+      const file = themeFileByKey[row.theme] || "theme1.html";
+      location.replace(`/${file}?id=${encodeURIComponent(row.id)}`);
+    }
+
+    run();
+  </script>
+</body>
+</html>
