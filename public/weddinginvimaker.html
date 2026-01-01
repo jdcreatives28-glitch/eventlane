@@ -736,6 +736,70 @@ input[type="time"] {
   margin-right: 8px;
 }
 
+/* =====================
+   HOTELS LIST
+   ===================== */
+.hotels-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.hotel-card{
+  border: 1px solid var(--border-subtle);
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 10px 20px rgba(15,23,42,0.06);
+  position: relative;
+  overflow:hidden;
+}
+
+.hotel-card .hotel-card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.hotel-badge{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#4338ca;
+  background: rgba(99,91,255,0.10);
+  border: 1px solid rgba(99,91,255,0.20);
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.hotel-remove-btn{
+  width:34px;
+  height:34px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: #fff;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  transition: transform .12s ease, background .12s ease;
+}
+.hotel-remove-btn:hover{
+  transform: translateY(-1px);
+  background:#f6f7ff;
+}
+.hotel-remove-btn svg{ width:16px; height:16px; opacity:.85; }
+
+.hotel-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+@media (max-width:640px){
+  .hotel-grid{ grid-template-columns:1fr; }
+}
 
   </style>
 </head>
@@ -1084,6 +1148,23 @@ input[type="time"] {
         </div>
       </section>
 
+      <!-- HOTELS NEARBY -->
+<section class="editor-section">
+  <h2 class="editor-section-title">Hotels Nearby</h2>
+  <p class="helper-text" style="margin-bottom:10px;">
+    Add recommended hotels for guests. You can include a photo and a website/Facebook link.
+  </p>
+
+  <div id="hotels-list" class="hotels-list"></div>
+
+  <div style="display:flex; justify-content:flex-start; margin-top:10px;">
+    <button id="btn-add-hotel" type="button" class="invite-id-btn">
+      Add more hotel
+    </button>
+  </div>
+</section>
+
+
       <!-- RSVP SETTINGS -->
       <section class="editor-section">
         <h2 class="editor-section-title">RSVP Settings</h2>
@@ -1268,6 +1349,7 @@ input[type="time"] {
         time: "",
         timezone: "",
         main_venue_label: "St. John Cathedral • City",
+        
 
         theme_photos: {},
 
@@ -1285,6 +1367,11 @@ input[type="time"] {
           notes: "",
           photo_url: ""
         },
+        hotels: [
+          { name:"", map_url:"", link:"", photo_url:"" }
+        ],
+
+
         dress_code: {
           title: "Modern formal • Neutral tones",
           description: "We'd love for everyone to come in modern formal attire in soft neutral tones.",
@@ -1305,6 +1392,7 @@ input[type="time"] {
         verse: { reference: "", text: "" },
         media: { photos: [], video_url: "" },
         rsvp_settings: { deadline: "", note: "" }
+        
       };
     }
 
@@ -1752,6 +1840,231 @@ input[type="time"] {
   }
 }
 
+function ensureHotelsArray(){
+  if(!data.hotels || !Array.isArray(data.hotels)) data.hotels = [];
+}
+
+function addHotelItem(){
+  ensureHotelsArray();
+  data.hotels.push({ name:"", map_url:"", link:"", photo_url:"" });
+  saveLocal();
+  renderHotels();
+  markDirty();
+}
+
+
+function removeHotelItem(index){
+  ensureHotelsArray();
+  data.hotels.splice(index, 1);
+  saveLocal();
+  renderHotels();
+  markDirty();
+}
+
+function renderHotels(){
+  ensureHotelsArray();
+  const wrap = document.getElementById("hotels-list");
+  if(!wrap) return;
+
+  if(!data.hotels.length){
+    wrap.innerHTML = `
+      <div class="recent-empty" style="padding:10px 0;">
+        No hotels added yet. Click <b>Add more hotel</b>.
+      </div>
+    `;
+    return;
+  }
+
+  wrap.innerHTML = data.hotels.map((h, i) => {
+    const safeName = (h?.name || "").replace(/"/g, "&quot;");
+    const safeMap = (h?.map_url || "").replace(/"/g, "&quot;");
+
+    const safeLink = (h?.link || "").replace(/"/g, "&quot;");
+    const photoUrl = h?.photo_url || "";
+
+    return `
+      <div class="hotel-card" data-hotel-index="${i}">
+        <div class="hotel-card-top">
+          <div class="hotel-badge">Hotel ${i+1}</div>
+
+          <button type="button" class="hotel-remove-btn" data-remove-hotel="${i}" aria-label="Remove hotel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"/>
+              <path d="M8 6V4h8v2"/>
+              <path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6"/>
+              <path d="M14 11v6"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="hotel-grid">
+          <div class="field-group">
+            <label class="field-label">Hotel name</label>
+            <input class="input" data-hotel-field="name" data-hotel-index="${i}" placeholder="e.g. The Peninsula Manila" value="${safeName}" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Google Maps URL</label>
+            <input class="input" data-hotel-field="map_url" data-hotel-index="${i}"
+              placeholder="https://maps.google.com/?q=..." value="${safeMap}" />
+            <div class="helper-text">Paste the Google Maps link so guests can open directions instantly.</div>
+          </div>
+
+
+          <div class="field-group" style="grid-column:1 / -1;">
+            <label class="field-label">Website / Facebook link</label>
+            <input class="input" data-hotel-field="link" data-hotel-index="${i}" placeholder="https://facebook.com/... or https://hotel.com" value="${safeLink}" />
+            <div class="helper-text">Guests will open this link to book or view details.</div>
+          </div>
+
+          <div class="field-group" style="grid-column:1 / -1;">
+            <label class="field-label">Hotel photo</label>
+            <div class="single-photo-upload-wrapper hotel-photo-zone" data-hotel-photo-zone="${i}">
+              <div class="single-photo-thumb" data-hotel-photo-thumb="${i}">
+                ${
+                  photoUrl
+                    ? `
+                      <img src="${photoUrl}" alt="Hotel photo ${i+1}" />
+                      <button type="button" class="single-photo-remove" data-hotel-photo-remove="${i}" aria-label="Remove photo">&times;</button>
+                    `
+                    : `
+                      <div class="single-photo-placeholder">
+                        <div class="photo-add-icon">+</div>
+                        <div class="photo-add-label">Add photo</div>
+                      </div>
+                    `
+                }
+              </div>
+
+              <input type="file" accept="image/*" class="hotel-photo-input" data-hotel-photo-input="${i}" style="display:none;" />
+              <p class="helper-text">Click or drag & drop a photo here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  bindHotelsEvents();
+}
+
+function bindHotelsEvents(){
+  // remove hotel
+  document.querySelectorAll("[data-remove-hotel]").forEach(btn => {
+    btn.onclick = () => {
+      const i = parseInt(btn.getAttribute("data-remove-hotel"), 10);
+      removeHotelItem(i);
+    };
+  });
+
+  // fields input
+  document.querySelectorAll("[data-hotel-field]").forEach(input => {
+    input.addEventListener("input", () => {
+      const i = parseInt(input.getAttribute("data-hotel-index"), 10);
+      const field = input.getAttribute("data-hotel-field");
+      ensureHotelsArray();
+      if(!data.hotels[i]) data.hotels[i] = { name:"", map_url:"", link:"", photo_url:"" };
+
+      data.hotels[i][field] = input.value;
+      saveLocal();
+      markDirty();
+    });
+  });
+
+  // photo zone click / input
+  document.querySelectorAll(".hotel-photo-zone").forEach(zone => {
+    const i = parseInt(zone.getAttribute("data-hotel-photo-zone"), 10);
+    const input = zone.querySelector(`[data-hotel-photo-input="${i}"]`);
+    if(!input) return;
+
+    zone.addEventListener("click", (e) => {
+      // allow remove button without opening file picker
+      if(e.target.closest("[data-hotel-photo-remove]")) return;
+      input.click();
+    });
+
+    input.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if(file && file.type.startsWith("image/")) uploadHotelPhotoFile(file, i);
+      input.value = "";
+    });
+
+    // drag/drop
+    ["dragenter","dragover"].forEach(evt =>
+      zone.addEventListener(evt, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        zone.classList.add("is-dragover");
+      })
+    );
+    ["dragleave","drop"].forEach(evt =>
+      zone.addEventListener(evt, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        zone.classList.remove("is-dragover");
+      })
+    );
+
+    zone.addEventListener("drop", (e) => {
+      const file = Array.from(e.dataTransfer?.files || []).find(f => f.type.startsWith("image/"));
+      if(file) uploadHotelPhotoFile(file, i);
+    });
+  });
+
+  // remove hotel photo
+  document.querySelectorAll("[data-hotel-photo-remove]").forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const i = parseInt(btn.getAttribute("data-hotel-photo-remove"), 10);
+      ensureHotelsArray();
+      if(!data.hotels[i]) return;
+      data.hotels[i].photo_url = "";
+      saveLocal();
+      renderHotels();
+      markDirty();
+    };
+  });
+}
+
+
+async function uploadHotelPhotoFile(file, index){
+  if (!supabaseClient) return;
+
+  ensureHotelsArray();
+  if(!data.hotels[index]) data.hotels[index] = { name:"", map_url:"", link:"", photo_url:"" };
+
+
+  if (!currentInviteId) {
+    currentInviteId = generateInviteId();
+    saveLocal();
+    updateInviteIdLabel();
+    refreshThemeSection(false);
+  }
+
+  const compressed = await compressImage(file, { maxWidth: 1700, maxHeight: 1700, quality: 0.82 });
+
+  const ext = "jpg";
+  const path = `invites/${currentInviteId}/hotel-${index}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await supabaseClient.storage
+    .from(INVITE_PHOTO_BUCKET)
+    .upload(path, compressed, { cacheControl: "3600", upsert: false, contentType: "image/jpeg" });
+
+  if (error) {
+    console.error(error);
+    Swal.fire({ icon: "error", title: "Upload failed", text: "Hotel photo upload failed." });
+    return;
+  }
+
+  const { data: publicData } = supabaseClient.storage.from(INVITE_PHOTO_BUCKET).getPublicUrl(path);
+  if (!publicData?.publicUrl) return;
+
+  data.hotels[index].photo_url = publicData.publicUrl;
+  saveLocal();
+  renderHotels();
+  markDirty();
+}
+
+
 
     function renderThemeThumbnails() {
       document.querySelectorAll(".theme-option").forEach(el => {
@@ -2069,6 +2382,8 @@ input[type="time"] {
       renderPhotoThumbnails();
       renderSinglePhoto("ceremony");
       renderSinglePhoto("reception");
+      renderHotels();
+
       updateInviteIdLabel();
 
       fetchAttendeeCount();
@@ -2088,6 +2403,7 @@ input[type="time"] {
     }
 
     function attachFieldListeners() {
+      
       fieldBindings.forEach(({ id, path }) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -2103,6 +2419,8 @@ input[type="time"] {
       setupPhotoUpload();
       setupSinglePhotoUpload("ceremony");
       setupSinglePhotoUpload("reception");
+      document.getElementById("btn-add-hotel")?.addEventListener("click", addHotelItem);
+
     }
 
     /* =====================
@@ -2166,7 +2484,7 @@ input[type="time"] {
 
         rsvp_deadline: data.rsvp_settings?.deadline || null,
         rsvp_note: data.rsvp_settings?.note || null,
-
+        hotels: Array.isArray(data.hotels) ? data.hotels : null, 
         theme_photos: data.theme_photos || null
       };
 
@@ -2372,6 +2690,8 @@ input[type="time"] {
       loaded.rsvp_settings.note = row.rsvp_note || "";
 
       loaded.theme_photos = row.theme_photos || {};
+      loaded.hotels = Array.isArray(row.hotels) ? row.hotels : (loaded.hotels || []);
+
 
       data = loaded;
       saveLocal();

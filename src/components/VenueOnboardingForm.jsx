@@ -2179,7 +2179,7 @@ function DropdownPills({ label, options, values, onToggle }) {
           height="18"
           viewBox="0 0 24 24"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+          xmlns="https://www.w3.org/2000/svg"
           aria-hidden="true"
         >
           <path

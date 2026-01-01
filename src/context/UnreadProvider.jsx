@@ -28,7 +28,7 @@ export const useUnread = () => useContext(UnreadCtx);
 const DEFAULT_ICON =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+<svg xmlns="https://www.w3.org/2000/svg" width="128" height="128">
   <rect width="100%" height="100%" fill="#069C6F"/>
   <circle cx="64" cy="48" r="24" fill="#fff"/>
   <rect x="24" y="82" width="80" height="36" rx="18" fill="#fff"/>
