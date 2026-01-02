@@ -17,6 +17,12 @@
 
   <style>
     :root {
+
+       --sage:        #81a690;   /* main sage */
+  --sage-soft:   #e9f3ee;   /* pale wash */
+  --sage-wash:   #f6fbf8;   /* near-white */
+  --mint:        #d9efe4;   /* minty end */
+  --sage-shadow: 129,166,144; /* rgb for shadows/borders */
       /* PALETTE – BLUSH + WHITE */
       --blush: #eabebb;
       --blush-deep: #d29a97;
@@ -235,36 +241,40 @@
 .hero-circle-wrap{
   display: grid;
   place-items: center;
-  width: 190px;
+  width: 250px;
   height: 190px;
   margin: 0 auto 22px;
-  border-radius: 50%;
+  border-radius: 10%;
   position: relative;
   overflow: hidden;
-  border: 3px solid rgba(234, 190, 187, 0.75);
+  border: 1px solid rgba(234, 190, 187, 0.75);
   box-shadow: 0 18px 44px rgba(234, 190, 187, 0.55);
   background: rgba(234,190,187,0.10);
 }
 
+/* Image: center it in both axes */
 .hero-circle-img{
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;               /* let width control size */
+  object-fit: contain;
   opacity: 0;
-  transform: scale(1.02);
+  transform: translate(-50%, -50%) scale(1.02);
+ 
   transition: opacity 1.2s var(--ease-elegant), transform 1.2s var(--ease-elegant);
 }
 
 .hero-circle-img.active{
   opacity: 1;
-  transform: scale(1);
+ 
 }
 
 @media (max-width: 640px){
   .hero-circle-wrap{ width: 160px; height: 160px; margin-bottom: 18px; }
 }
+
 
 
     /* small premium monogram separator */
@@ -448,9 +458,7 @@
       padding: 60px 36px 54px;
       background: radial-gradient(circle at top, var(--paper-bg-top) 0, var(--paper-bg-mid) 55%, var(--paper-bg-bottom) 100%);
       border-radius: 28px 28px 24px 24px;
-      box-shadow:
-        0 26px 70px rgba(234, 190, 187, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.9);
+      
       border-top: 0px solid var(--blush);
     }
     .paper-sheet::before {
@@ -559,36 +567,47 @@
       justify-content: center;
       margin-top: 28px;
     }
-    .info-card {
-      flex: 1 1 300px;
-      border-radius: 18px;
-      border: 1px solid rgba(234, 190, 187, 0.55);
-      padding: 36px 22px 32px;
-      text-align: center;
-      background:
-        radial-gradient(circle at top, #fffafa 0, #fbe5e4 52%, #f4d4d3 100%);
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-      box-shadow: 0 12px 30px rgba(234, 190, 187, 0.35);
-    }
-    .info-card::before {
-      content: "";
-      position: absolute;
-      inset: -20%;
-      background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.7) 0, transparent 45%),
-        radial-gradient(circle at bottom, rgba(234, 190, 187, 0.12) 0, transparent 50%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .info-card:hover {
-      transform: translateY(-6px);
-      border-color: rgba(234, 190, 187, 0.9);
-      box-shadow: 0 18px 40px rgba(234, 190, 187, 0.6);
-    }
-    .info-card:hover::before { opacity: 1; }
+   
+.info-card {
+  flex: 1 1 300px;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--sage-shadow), 0.55);
+  padding: 36px 22px 32px;
+  text-align: center;
+  background:
+    radial-gradient(circle at top, var(--sage-wash) 0, var(--sage-soft) 52%, var(--mint) 100%);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+ 
+}
+
+.info-card::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.7) 0, transparent 45%),
+    radial-gradient(circle at bottom, rgba(var(--sage-shadow), 0.12) 0, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.info-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(var(--sage-shadow), 0.9);
+  box-shadow: 0 18px 40px rgba(var(--sage-shadow), 0.55);
+}
+
+.info-card:hover::before { opacity: 1; }
+
+/* nice keyboard focus */
+.info-card:focus-visible{
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(var(--sage-shadow), 0.15);
+}
 
     .card-icon {
       font-size: 1.6rem;
@@ -617,7 +636,7 @@
       display: inline-block;
       margin-top: 18px;
       padding: 10px 26px;
-      background: var(--blush-deep);
+      background: var(--sage);
       color: #ffffff;
       text-decoration: none;
       font-family: var(--font-sans);
@@ -649,7 +668,7 @@
     .gallery-mosaic img {
       width: 100%;
       aspect-ratio: 1/1;
-      object-fit: cover;
+      object-fit:contain;
       filter: saturate(1.05);
       transition: filter 0.3s, transform 0.3s, box-shadow 0.3s;
       cursor: pointer;
@@ -714,36 +733,54 @@
       box-shadow: 0 8px 18px rgba(234, 190, 187, 0.55);
     }
 
-    /* VIDEO */
-    .video-box {
-      margin-top: 40px;
-      padding: 12px;
-      border-radius: 18px;
-      border: 1px solid rgba(234, 190, 187, 0.9);
-      background: radial-gradient(circle at top, #fffdfc 0, #fbe5e4 55%, #f3d2d0 100%);
-      box-shadow: 0 18px 38px rgba(234, 190, 187, 0.55);
-    }
-    .video-container {
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 14px;
-      overflow: hidden;
-    }
-    .video-container iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
+   /* VIDEO */
+.video-box {
+  margin-top: 40px;
+  padding: 0px;
+  border-radius: 18px;
+  border: 0px solid rgba(var(--sage-shadow), 0.9);
+  background: radial-gradient(circle at top, var(--sage-wash) 0, var(--sage-soft) 55%, var(--mint) 100%);
+ 
+}
 
+.video-container {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #0f1714;             /* deep green-black instead of pure black */
+  border-radius: 14px;
+  overflow: hidden;
+
+}
+
+.video-container iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+}
+
+/* subtle hover lift for the whole box */
+.video-box:hover{
+  transform: translateY(-4px);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  border-color: rgba(var(--sage-shadow), 1);
+  box-shadow: 0 22px 44px rgba(var(--sage-shadow), 0.55);
+}
+
+/* keyboard focus */
+.video-box:focus-within{
+  outline: 2px solid var(--sage);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(var(--sage-shadow), 0.18);
+}
     /* FOOTER & RSVP */
     .footer-section {
       background: radial-gradient(circle at top, #ffffff 0, #f5dcd9 35%, #eabebb 90%);
       color: var(--text-dark);
       text-align: center;
       padding: 60px 20px 50px;
-      margin-top: 60px;
+    
       position: relative;
     }
     .footer-section::before {
@@ -808,7 +845,7 @@
       color: var(--text-dark);
     }
     .swal2-html-container {
-      margin: 0 0 8px;
+      margin: 0 0 0px;
       color: var(--text-muted);
       font-size: 0.82rem;
     }
@@ -820,6 +857,8 @@
       color: var(--text-dark);
       font-size: 0.8rem;
       padding-inline: 14px;
+      margin:0px;
+      width: 100%;
     }
     .swal2-textarea {
       border-radius: 12px;
@@ -1106,18 +1145,19 @@
 
 .hotel-card{
   border-radius: 18px;
-  border: 1px solid rgba(234, 190, 187, 0.55);
+  border: 1px solid rgba(var(--sage-shadow), 0.55);
   background:
-    radial-gradient(circle at top, #fffafa 0, #fbe5e4 52%, #f4d4d3 100%);
-  box-shadow: 0 12px 30px rgba(234, 190, 187, 0.35);
+    radial-gradient(circle at top, var(--sage-wash) 0, var(--sage-soft) 52%, var(--mint) 100%);
+  box-shadow: 0 12px 30px rgba(var(--sage-shadow), 0.35);
   overflow: hidden;
   position: relative;
   transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
 }
+
 .hotel-card:hover{
   transform: translateY(-6px);
-  border-color: rgba(234, 190, 187, 0.9);
-  box-shadow: 0 18px 40px rgba(234, 190, 187, 0.6);
+  border-color: rgba(var(--sage-shadow), 0.9);
+  box-shadow: 0 18px 40px rgba(var(--sage-shadow), 0.55);
 }
 
 .hotel-photo{
@@ -1125,7 +1165,26 @@
   height: 190px;
   object-fit: cover;
   display: block;
-  background: #fff7f6;
+  background: #eef6f1; /* pale sage backdrop while loading */
+}
+
+/* optional: subtle top vignette on photo for text legibility */
+.hotel-photo-wrap{
+  position: relative;
+  overflow: hidden;
+}
+.hotel-photo-wrap::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(to bottom, rgba(0,0,0,.15), transparent 50%);
+  pointer-events:none;
+}
+
+/* nice keyboard focus */
+.hotel-card:focus-within{
+  outline: 2px solid var(--sage);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(var(--sage-shadow), 0.18);
 }
 
 .hotel-body{
@@ -1240,6 +1299,56 @@
   margin-top: 8px;
 }
 
+
+/* Attendees list inside SweetAlert */
+.attendees-wrap{
+  text-align: left;
+  margin-top: 8px;
+  max-height: 55vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+.attendee-item{
+  padding: 12px 12px;
+  border: 1px solid rgba(234, 190, 187, 0.55);
+  background: rgba(255,255,255,0.85);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 10px 22px rgba(234, 190, 187, 0.22);
+}
+.attendee-top{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.attendee-name{
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-dark);
+  font-size: .95rem;
+}
+.attendee-meta{
+  font-family: var(--font-sans);
+  font-size: .62rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(111, 91, 91, 0.78);
+  white-space: nowrap;
+}
+.attendee-msg{
+  margin-top: 8px;
+  font-size: .92rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.attendee-msg.empty{
+  opacity: .75;
+  font-style: italic;
+}
+
   </style>
 </head>
 <body>
@@ -1276,8 +1385,8 @@
 
         <nav class="topbar-nav" id="topbar-nav">
           <a href="#top-header" data-nav="top-header">Invitation</a>
-          <a href="#story-section" data-nav="story-section">Story</a>
-          <a href="#weddingday-section" data-nav="weddingday-section">Details</a>
+       
+          <a href="#weddingday-section" data-nav="weddingday-section">Venues</a>
           <a href="#gallery-section" data-nav="gallery-section">Gallery</a>
           <a href="#sponsors-section" data-nav="sponsors-section">Entourage</a>
           <a href="#dress-section" data-nav="dress-section">Dress Code</a>
@@ -1304,9 +1413,11 @@
         </div>
 
         <div class="names-display anim-up delay-400">
-          <span id="hero-bride">Bride Name</span>
+         <span id="hero-groom">Groom Name</span>
           <span class="ampersand">&</span>
-          <span id="hero-groom">Groom Name</span>
+          
+           <span id="hero-bride">Bride Name</span>
+          
         </div>
 
         <div class="hero-monogram anim-up delay-400">Save the Date</div>
@@ -1351,7 +1462,7 @@
         <div
           id="verse-block"
           class="hidden anim-up delay-500"
-          style="margin-top:30px; padding:20px 18px; background:var(--blush-soft); border-radius:16px; display:inline-block; border:1px solid rgba(234,190,187,0.9);"
+          style="margin-top:30px; padding:20px 18px; background:var(--sage-soft); border-radius:16px; display:inline-block; border:1px solid rgba(var(--sage-shadow), 0.55);"
         >
           <p
             style="font-family:var(--font-script); font-size:1.5rem; color:var(--text-dark); margin:0 0 6px;"
@@ -1429,9 +1540,21 @@
         <div class="divider-icon"></div>
       </div>
 
+       <!-- VIDEO -->
+      <section id="video-section" class="hidden anim-up" style="margin-top:54px;">
+        <div class="text-center">
+          <span class="section-sub">Film</span>
+          <h2 class="section-title" style="font-size:1.7rem;">Our Story in Motion</h2>
+        </div>
+        <div class="video-box anim-scale delay-200">
+          <div class="video-container" id="video-frame"></div>
+        </div>
+      </section>
+      <br>
       <!-- GALLERY -->
       <section id="gallery-section" class="text-center">
-        <span class="section-sub anim-up">Memories</span>
+        <span class="section-sub anim-up"></span>
+         <span class="section-sub anim-up"></span>
         <h2 class="section-title anim-up delay-100">Gallery</h2>
         <div class="gallery-mosaic anim-up delay-200" id="gallery-grid"></div>
       </section>
@@ -1445,32 +1568,31 @@
         <div class="sponsors-list" id="sponsor-container"></div>
       </section>
 
+             <div class="divider anim-scale delay-200" data-divider="after-hotels">
+    <div class="divider-icon"></div>
+  </div>
+
+
       <!-- DRESS CODE (AFTER ENTOURAGE) -->
       <section id="dress-section" class="text-center hidden" style="margin-top:54px;">
         <span class="section-sub anim-up">Dress Code</span>
         <h2 class="section-title anim-up delay-100">Attire</h2>
+         <h3 class="dress-title anim-up delay-200" id="dress-title">Formal</h3>
         <p class="story-text dress-desc anim-up delay-200" id="dress-desc" style="font-size:0.95rem;"></p>
-        <h3 class="dress-title anim-up delay-200" id="dress-title">Formal</h3>
+       
         <div class="palette-circles anim-up delay-300" id="dress-colors"></div>
       </section>
 
-      <!-- VIDEO -->
-      <section id="video-section" class="hidden anim-up" style="margin-top:54px;">
-        <div class="text-center">
-          <span class="section-sub">Film</span>
-          <h2 class="section-title" style="font-size:1.7rem;">Our Story in Motion</h2>
-        </div>
-        <div class="video-box anim-scale delay-200">
-          <div class="video-container" id="video-frame"></div>
-        </div>
-      </section>
+       <div class="divider anim-scale delay-200" data-divider="after-hotels">
+    <div class="divider-icon"></div>
+  </div>
+
+     
           <!-- HOTELS -->
 <section id="hotels-section" class="text-center hidden">
   <span class="section-sub anim-up">Stay</span>
   <h2 class="section-title anim-up delay-100">Nearby Hotels</h2>
-  <div class="divider anim-scale delay-200" data-divider="after-hotels">
-    <div class="divider-icon"></div>
-  </div>
+ 
 
   <div class="hotels-grid" id="hotels-grid"></div>
 </section>
@@ -1488,6 +1610,10 @@
           <button id="rsvp-button" class="btn-gold" style="background:var(--blush-deep); color:#fff; margin-top:6px;">
             RSVP Now
           </button>
+          <button id="attendees-button" class="btn-gold" style="margin-top:10px;">
+            Attendees
+          </button>
+
         </div>
       </div>
       <p class="footer-note-script anim-up delay-200" id="footer-note">
@@ -1936,6 +2062,91 @@ async function init() {
   // ✅ set currentInviteId from DB row (so RSVP works even when using slug-only links)
   currentInviteId = row.id || id || null;
 
+
+  // Treat these as "confirmed/attending" statuses
+const CONFIRMED_STATUSES = Array.from(
+  new Set(["attending", ...STATUS_PAIRS.map(p => p[0])]) // yes values
+);
+
+// Simple HTML escape (prevents broken layout / injection)
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function showAttendees(){
+  if (!supabaseClient || !currentInviteId) {
+    Swal.fire("Error", "Attendees list is not available at this moment.", "error");
+    return;
+  }
+
+  // Fetch RSVPs for this invite_id that are confirmed/attending
+  const { data, error } = await supabaseClient
+    .from(RSVPS_TABLE)
+    .select("id, invite_id, name, status, message, persons, created_at")
+    .eq("invite_id", currentInviteId)
+    .in("status", CONFIRMED_STATUSES)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Attendees fetch error:", error);
+    Swal.fire("Oops", error.message || "Could not load attendees.", "error");
+    return;
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  if (rows.length === 0) {
+    Swal.fire({
+      title: "Attendees",
+      html: `<div style="text-align:center; padding: 8px 0; color: rgba(111, 91, 91, 0.85);">
+              No confirmed attendees yet.
+            </div>`,
+      confirmButtonText: "Close",
+      customClass: { popup: "rsvp-popup", confirmButton: "rsvp-confirm" }
+    });
+    return;
+  }
+
+  const html = `
+    <div class="attendees-wrap">
+      ${rows.map(r => {
+        const nm = escapeHtml(r.name || "Guest");
+        const msg = escapeHtml(r.message || "");
+        const persons = Number(r.persons || 1);
+        const dt = r.created_at ? new Date(r.created_at) : null;
+        const when = dt && !isNaN(dt.getTime())
+          ? dt.toLocaleString("en-US", { month:"short", day:"2-digit", year:"numeric" })
+          : "";
+
+        return `
+          <div class="attendee-item">
+            <div class="attendee-top">
+              <div class="attendee-name">${nm}</div>
+              <div class="attendee-meta">${persons} guest${persons>1?"s":""}${when ? " · " + when : ""}</div>
+            </div>
+            <div class="attendee-msg ${msg ? "" : "empty"}">
+              ${msg ? `“${msg}”` : "No message."}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  Swal.fire({
+    title: "Confirmed Attendees",
+    html,
+    showCancelButton: false,
+    confirmButtonText: "Close",
+    customClass: { popup: "rsvp-popup", confirmButton: "rsvp-confirm" }
+  });
+}
+
+
   // =========================
   // ✅ everything below is your existing render logic (unchanged)
   // =========================
@@ -2317,10 +2528,12 @@ if (cleanHotels.length > 0) {
       addSp("Parents of the Groom", row.parents_groom);
       addSp("Team Bride", row.maid_of_honor_block);
       addSp("Team Groom", row.best_man_block);
-      addSp("Pastors", row.secondary_sponsors);
+      
       addSp("Flower Girls", row.flower_girls);
       addSp("Ring Bearer", row.ring_bearer);
+      addSp("Bible Bearer", "Collin Cates");
       addSp("Coin Bearer", row.other_roles);
+      addSp("Officiating Pastors", row.secondary_sponsors);
 
       const sponsorsSection = document.getElementById("sponsors-section");
       const showSponsors = spCon.children.length > 0;
@@ -2360,6 +2573,10 @@ if (cleanHotels.length > 0) {
       // Attach RSVP button handler
       const rsvpBtn = document.getElementById("rsvp-button");
       if (rsvpBtn) rsvpBtn.addEventListener("click", handleRSVP);
+
+      const attendeesBtn = document.getElementById("attendees-button");
+if (attendeesBtn) attendeesBtn.addEventListener("click", showAttendees);
+
 
       // ✅ Dividers: hide if nothing between sections
       // If story hidden, the divider after story should still make sense; we handle by showing/hiding per section:
